@@ -1,0 +1,94 @@
+99,100c99,100
+<     if 'b3d_export' not in dir(bpy.ops.screen):
+<         log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>     if 'spm_export' not in dir(bpy.ops.screen):
+>         log_error("Cannot find the spm exporter, make sure you installed it properly")
+105c105
+<         f.write('    <object position="%f %f %f" model="%s.b3d"/>\n' \
+---
+>         f.write('    <object position="%f %f %f" model="%s.spm"/>\n' \
+114,115c114
+<         bpy.ops.screen.b3d_export(localsp=False, mipmap=True, lights=False, vcolors=True,
+<                                   vnormals=True, cameras=False, filepath=path + "/" + obj.name,
+---
+>         bpy.ops.screen.spm_export(localsp=False, filepath=path + "/" + obj.name,
+128,129c127,128
+<     if 'b3d_export' not in dir(bpy.ops.screen):
+<         log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>     if 'spm_export' not in dir(bpy.ops.screen):
+>         log_error("Cannot find the spm exporter, make sure you installed it properly")
+147c146
+<         f.write('    <speed-weighted position="%f %f %f" model="%s.b3d" %s/>\n' \
+---
+>         f.write('    <speed-weighted position="%f %f %f" model="%s.spm" %s/>\n' \
+156,157c155
+<         bpy.ops.screen.b3d_export(localsp=False, mipmap=True, lights=False, vcolors=True,
+<                                   vnormals=True, cameras=False, filepath=path + "/" + obj.name,
+---
+>         bpy.ops.screen.spm_export(localsp=False, filepath=path + "/" + obj.name,
+169,170c167,168
+<     if 'b3d_export' not in dir(bpy.ops.screen):
+<         log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>     if 'spm_export' not in dir(bpy.ops.screen):
+>         log_error("Cannot find the spm exporter, make sure you installed it properly")
+176,177c174,175
+<     lWheelNames = ("wheel-front-right.b3d", "wheel-front-left.b3d",
+<                    "wheel-rear-right.b3d",  "wheel-rear-left.b3d"   )
+---
+>     lWheelNames = ("wheel-front-right.spm", "wheel-front-left.spm",
+>                    "wheel-rear-right.spm",  "wheel-rear-left.spm"   )
+213,214c211
+<         bpy.ops.screen.b3d_export(localsp=False, mipmap=True, lights=False, vcolors=True,
+<                                   vnormals=True, cameras=False, filepath=path + "/" + lWheelNames[index],
+---
+>         bpy.ops.screen.spm_export(localsp=False, filepath=path + "/" + lWheelNames[index],
+318,324d314
+<     
+<     #b3d_export.b3d_parameters["vertex-normals" ] = 1  # Vertex normals.
+<     #b3d_export.b3d_parameters["vertex-colors"  ] = 1  # Vertex colors
+<     #b3d_export.b3d_parameters["cameras"        ] = 0  # Cameras
+<     #b3d_export.b3d_parameters["lights"         ] = 0  # Lights
+<     #b3d_export.b3d_parameters["mipmap"         ] = 1  # Enable mipmap
+<     #b3d_export.b3d_parameters["local-space"    ] = 0  # Export in world space
+352c342
+<             # Due to limitations with the b3d exporter animated
+---
+>             # Due to limitations with the spm exporter animated
+390c380
+<     model_file = kart_name_string.lower()+".b3d"
+---
+>     model_file = kart_name_string.lower()+".spm"
+427,428c417,418
+<     if 'b3d_export' not in dir(bpy.ops.screen):
+<         log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>     if 'spm_export' not in dir(bpy.ops.screen):
+>         log_error("Cannot find the spm exporter, make sure you installed it properly")
+431,432c421
+<     bpy.ops.screen.b3d_export(localsp=False, mipmap=True, lights=False, vcolors=True,
+<                               vnormals=True, cameras=False, filepath=path+"/"+model_file,
+---
+>     bpy.ops.screen.spm_export(localsp=False, filepath=path+"/"+model_file,
+436c425
+<     #b3d_export.write_b3d_file(Blender.sys.join(path, model_file), lKart)
+---
+>     #spm_export.write_spm_file(Blender.sys.join(path, model_file), lKart)
+454,460c443,449
+<     # Settings for the b3d exporter:
+<     #b3d_export.b3d_parameters["vertex-normals" ] = 1  # Vertex normals.
+<     #b3d_export.b3d_parameters["vertex-colors"  ] = 1  # Vertex colors
+<     #b3d_export.b3d_parameters["cameras"        ] = 0  # Cameras
+<     #b3d_export.b3d_parameters["lights"         ] = 0  # Lights
+<     #b3d_export.b3d_parameters["mipmap"         ] = 1  # Enable mipmap
+<     #b3d_export.b3d_parameters["local-space"    ] = 0  # Export in world space
+---
+>     # Settings for the spm exporter:
+>     #spm_export.spm_parameters["vertex-normals" ] = 1  # Vertex normals.
+>     #spm_export.spm_parameters["vertex-colors"  ] = 1  # Vertex colors
+>     #spm_export.spm_parameters["cameras"        ] = 0  # Cameras
+>     #spm_export.spm_parameters["lights"         ] = 0  # Lights
+>     #spm_export.spm_parameters["mipmap"         ] = 1  # Enable mipmap
+>     #spm_export.spm_parameters["local-space"    ] = 0  # Export in world space

@@ -1,0 +1,116 @@
+368,369c368,369
+<             b3d_name = self.m_parent_track_exporter.exportLocalB3D(obj, self.m_export_path, name, True)
+<             s = "  <water model=\"%s\" %s" % (b3d_name, getXYZHPRString(obj))
+---
+>             spm_name = self.m_parent_track_exporter.exportLocalSPM(obj, self.m_export_path, name, True)
+>             s = "  <water model=\"%s\" %s" % (spm_name, getXYZHPRString(obj))
+551c551
+<                         f.write('  <object type="animation" %s interaction="ghost" model="%s.b3d" skeletal-animation="false"></object>\n' % (loc_rot_scale_str, name))
+---
+>                         f.write('  <object type="animation" %s interaction="ghost" model="%s.spm" skeletal-animation="false"></object>\n' % (loc_rot_scale_str, name))
+1960c1960
+<     # Exports the models as b3d object in local coordinate, i.e. with the object
+---
+>     # Exports the models as spm object in local coordinate, i.e. with the object
+1962,1963c1962,1963
+<     def exportLocalB3D(self, obj, sPath, name, applymodifiers=True):
+<         # If the name contains a ".b3d" the model is assumed to be part of
+---
+>     def exportLocalSPM(self, obj, sPath, name, applymodifiers=True):
+>         # If the name contains a ".spm" the model is assumed to be part of
+1966c1966
+<         if re.search("\.b3d$", name): return name
+---
+>         if re.search("\.spm$", name): return name
+1968c1968
+<         name = name + ".b3d"
+---
+>         name = name + ".spm"
+1972,1973c1972,1973
+<         if 'b3d_export' not in dir(bpy.ops.screen):
+<             log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>         if 'spm_export' not in dir(bpy.ops.screen):
+>             log_error("Cannot find the SPM exporter, make sure you installed it properly")
+1980,1981c1980
+<         bpy.ops.screen.b3d_export(localsp=True, mipmap=True, lights=False, vcolors=True,
+<                                   vnormals=True, cameras=False, filepath=sPath+"/"+name,
+---
+>         bpy.ops.screen.spm_export(localsp=True, filepath=sPath+"/"+name,
+1984c1983
+<         #bpy.ops.screen.b3d_export.skip_dialog = False
+---
+>         #bpy.ops.screen.spm_export.skip_dialog = False
+1987c1986
+<         #b3d_export.b3d_parameters["local-space"] = old_space
+---
+>         #spm_export.spm_parameters["local-space"] = old_space
+2303c2302
+<             b3d_name = self.exportLocalB3D(obj, sPath, props['filename'], props['modifiers'])
+---
+>             spm_name = self.exportLocalSPM(obj, sPath, props['filename'], props['modifiers'])
+2328c2327
+<             f.write("    <static-object lod_distance=\"%i\" lod_group=\"%s\" model=\"%s\" %s interaction=\"%s\"%s/>\n" % (props['distance'], props['groupname'], b3d_name, getXYZHPRString(obj), getObjectProperty(obj, "interaction", "static"), additional_prop_str) )
+---
+>             f.write("    <static-object lod_distance=\"%i\" lod_group=\"%s\" model=\"%s\" %s interaction=\"%s\"%s/>\n" % (props['distance'], props['groupname'], spm_name, getXYZHPRString(obj), getObjectProperty(obj, "interaction", "static"), additional_prop_str) )
+2333c2332
+<     #    b3d_name = self.exportLocalB3D(obj, sPath, name, True)
+---
+>     #    spm_name = self.exportLocalSPM(obj, sPath, name, True)
+2339c2338
+<     #    f.write("    <static-object model=\"%s\" lod_group=\"%s\" %s interaction=\"%s\"%s/>\n" % (b3d_name, name, getXYZHPRString(obj), getObjectProperty(obj, "interaction", "static"), tangents_str) )
+---
+>     #    f.write("    <static-object model=\"%s\" lod_group=\"%s\" %s interaction=\"%s\"%s/>\n" % (spm_name, name, getXYZHPRString(obj), getObjectProperty(obj, "interaction", "static"), tangents_str) )
+2362c2361
+<                 b3d_name = self.exportLocalB3D(obj, sPath, name, True)
+---
+>                 spm_name = self.exportLocalSPM(obj, sPath, name, True)
+2369c2368
+<                 attributes.append("model=\"%s\""%b3d_name)
+---
+>                 attributes.append("model=\"%s\""%spm_name)
+2443c2442
+<                 b3d_name = None
+---
+>                 spm_name = None
+2445c2444
+<                 b3d_name = self.exportLocalB3D(obj, sPath, name, True)
+---
+>                 spm_name = self.exportLocalSPM(obj, sPath, name, True)
+2475c2474
+<                 flags.append('model="%s"' % b3d_name)
+---
+>                 flags.append('model="%s"' % spm_name)
+2546c2545
+<             self.writeAnimationWithIPO(f, b3d_name, obj, ipo)
+---
+>             self.writeAnimationWithIPO(f, spm_name, obj, ipo)
+2890c2889
+<             old_model_files = [ f for f in os.listdir(sPath) if f.endswith(".b3d") ]
+---
+>             old_model_files = [ f for f in os.listdir(sPath) if f.endswith(".spm") ]
+3010c3009
+<         sTrackName = sBase+"_track.b3d"
+---
+>         sTrackName = sBase+"_track.spm"
+3016,3017c3015,3016
+<         if 'b3d_export' not in dir(bpy.ops.screen):
+<             log_error("Cannot find the B3D exporter, make sure you installed it properly")
+---
+>         if 'spm_export' not in dir(bpy.ops.screen):
+>             log_error("Cannot find the SPM exporter, make sure you installed it properly")
+3021,3023c3020,3021
+<             bpy.ops.screen.b3d_export(localsp=False, mipmap=True, lights=False, vcolors=True,
+<                                     vnormals=True, cameras=False, filepath=sPath+"/"+sTrackName,
+<                                     overwrite_without_asking=True)
+---
+>             bpy.ops.screen.spm_export(localsp=False, filepath=sPath+"/"+sTrackName, do_sp=True,
+>                                       overwrite_without_asking=True)
+3026c3024
+<         #write_b3d_file(sFilename+"_track.b3d")
+---
+>         #write_spm_file(sFilename+"_track.spm")
+3028c3026
+<         #b3d_export.write_b3d_file(sFilename+"_track.b3d", lTrack)
+---
+>         #spm_export.write_spm_file(sFilename+"_track.spm", lTrack)

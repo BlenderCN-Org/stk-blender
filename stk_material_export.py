@@ -319,8 +319,7 @@ def writeMaterialsFile(sPath):
                 strippedName = AProperty.strip()[len("sfx_"):]
 
                 if strippedName in [
-                        'filename', 'rolloff', 'min_speed', 'max_speed', 'min_pitch', 'max_pitch', 'positional',
-                        'volume'
+                    'filename', 'rolloff', 'min_speed', 'max_speed', 'min_pitch', 'max_pitch', 'positional', 'volume'
                 ]:
                     if isinstance(currentValue, float):
                         sSFX = "%s %s=\"%.2f\"" % (sSFX, strippedName, currentValue)
@@ -359,8 +358,9 @@ def writeMaterialsFile(sPath):
                             sImage = "%s %s=\"%.2f\"" % (sImage, AProperty.replace("_", "-"), currentValue)
                         else:
                             # In blender, proeprties use '_', but STK still expects '-'
-                            sImage = "%s %s=\"%s\"" % (sImage, AProperty.replace("_", "-"),
-                                                       (currentValue + '').strip())
+                            sImage = "%s %s=\"%s\"" % (
+                                sImage, AProperty.replace("_", "-"), (currentValue + '').strip()
+                            )
 
         # Now write the main content of the materials.xml file
         if sImage or hasSoundeffect or hasParticle or hasZipper:

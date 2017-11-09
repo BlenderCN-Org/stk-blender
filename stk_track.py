@@ -160,8 +160,9 @@ def writeIPO(f, anim_data):
             factor = -57.29577951    # 180/PI
         else:
             factor = 1
-        f.write("    <curve channel=\"%s\" interpolation=\"%s\" extend=\"%s\">\n" % (name, interpolation,
-                                                                                     extrapolation))
+        f.write(
+            "    <curve channel=\"%s\" interpolation=\"%s\" extend=\"%s\">\n" % (name, interpolation, extrapolation)
+        )
         #(name, dInterp[curve.interpolation], dExtend[curve.extend]))
 
         warning_shown = False
@@ -169,18 +170,26 @@ def writeIPO(f, anim_data):
         for bez in curve.keyframe_points:
             if interpolation == "bezier":
                 if bez.interpolation == 'BEZIER':
-                    f.write("      <p c=\"%.3f %.3f\" h1=\"%.3f %.3f\" h2=\"%.3f %.3f\"/>\n" %
-                            (bez.co[0], factor * bez.co[1], bez.handle_left[0], factor * bez.handle_left[1],
-                             bez.handle_right[0], factor * bez.handle_right[1]))
+                    f.write(
+                        "      <p c=\"%.3f %.3f\" h1=\"%.3f %.3f\" h2=\"%.3f %.3f\"/>\n" % (
+                            bez.co[0], factor * bez.co[1], bez.handle_left[0], factor * bez.handle_left[1],
+                            bez.handle_right[0], factor * bez.handle_right[1]
+                        )
+                    )
                 else:
                     # point with linear IPO in bezier curve
-                    f.write("      <p c=\"%.3f %.3f\" h1=\"%.3f %.3f\" h2=\"%.3f %.3f\"/>\n" %
-                            (bez.co[0], factor * bez.co[1], bez.co[0] - 1, factor * bez.co[1], bez.co[0] + 1,
-                             factor * bez.co[1]))
+                    f.write(
+                        "      <p c=\"%.3f %.3f\" h1=\"%.3f %.3f\" h2=\"%.3f %.3f\"/>\n" % (
+                            bez.co[0], factor * bez.co[1], bez.co[0] - 1, factor * bez.co[1], bez.co[0] + 1,
+                            factor * bez.co[1]
+                        )
+                    )
 
                     if not warning_shown:
-                        log_warning("You have an animation curve which contains a mix of mixture of Bezier and " +
-                                    "linear interpolation, please convert everything to Bezier for best results")
+                        log_warning(
+                            "You have an animation curve which contains a mix of mixture of Bezier and " +
+                            "linear interpolation, please convert everything to Bezier for best results"
+                        )
                         warning_shown = True
             else:
                 f.write("      <p c=\"%.3f %.3f\"/>\n" % (bez.co[0], factor * bez.co[1]))
@@ -203,8 +212,10 @@ def writeBezierCurve(f, curve, speed, extend="cyclic"):
             v0 = matrix * pt.handle_left
             v1 = matrix * pt.co * matrix
             v2 = matrix * pt.handle_right
-            f.write("      <point c=\"%f %f %f\" h1=\"%f %f %f\" h2=\"%f %f %f\" />\n" %
-                    (v1[0], v1[2], v1[1], v0[0], v0[2], v0[1], v2[0], v2[2], v2[1]))
+            f.write(
+                "      <point c=\"%f %f %f\" h1=\"%f %f %f\" h2=\"%f %f %f\" />\n" %
+                (v1[0], v1[2], v1[1], v0[0], v0[2], v0[1], v2[0], v2[2], v2[1])
+            )
     f.write("    </curve>\n")
 
 
@@ -543,11 +554,14 @@ class ParticleEmitterExporter:
                 if getObjectProperty(obj, "auto_emit", 'true') == 'false':
                     flags.append('auto_emit="%s"' % getObjectProperty(obj, "auto_emit", 'true'))
 
-                f.write('  <particle-emitter kind="%s" id=\"%s\" %s %s>\n' % (getObjectProperty(obj, "kind", 0),
-                                                                              obj.name, originXYZ, ' '.join(flags)))
+                f.write(
+                    '  <particle-emitter kind="%s" id=\"%s\" %s %s>\n' %
+                    (getObjectProperty(obj, "kind", 0), obj.name, originXYZ, ' '.join(flags))
+                )
 
                 if obj.animation_data and obj.animation_data.action and obj.animation_data.action.fcurves and len(
-                        obj.animation_data.action.fcurves) > 0:
+                    obj.animation_data.action.fcurves
+                ) > 0:
                     writeIPO(f, obj.animation_data)
 
                 f.write('  </particle-emitter>\n')
@@ -583,8 +597,9 @@ class BlenderHairExporter:
 
             for particleSystem in obj.particle_systems:
 
-                f.write('  <!-- Hair system %s, contains %i particles -->\n' % (obj.name,
-                                                                                len(particleSystem.particles)))
+                f.write(
+                    '  <!-- Hair system %s, contains %i particles -->\n' % (obj.name, len(particleSystem.particles))
+                )
                 duplicated_obj = particleSystem.settings.dupli_object
 
                 if particleSystem.settings.hair_length > 0:
@@ -607,15 +622,18 @@ class BlenderHairExporter:
                     if duplicated_obj.proxy is not None and duplicated_obj.proxy.library is not None:
                         path_parts = re.split("/|\\\\", duplicated_obj.proxy.library.filepath)
                         lib_name = path_parts[-2]
-                        f.write('  <library name="%s" id=\"%s\" %s/>\n' % (lib_name, duplicated_obj.name,
-                                                                           loc_rot_scale_str))
+                        f.write(
+                            '  <library name="%s" id=\"%s\" %s/>\n' %
+                            (lib_name, duplicated_obj.name, loc_rot_scale_str)
+                        )
                     else:
                         name = getObjectProperty(duplicated_obj, "name", duplicated_obj.name)
                         if len(name) == 0:
                             name = duplicated_obj.name
                         f.write(
                             '  <object type="animation" %s interaction="ghost" model="%s.spm" skeletal-animation="false"></object>\n'
-                            % (loc_rot_scale_str, name))
+                            % (loc_rot_scale_str, name)
+                        )
 
             f.write('  <!-- END Hair system %s -->\n\n' % obj.name)
 
@@ -652,12 +670,16 @@ class SoundEmitterExporter:
 
                 f.write(
                     '  <object type="sfx-emitter" id=\"%s\" sound="%s" rolloff="%.3f" volume="%s" max_dist="%.1f" %s%s%s>\n'
-                    % (obj.name, getObjectProperty(obj, "sfx_filename", "some_sound.ogg"),
-                       getObjectProperty(obj, "sfx_rolloff", 0.05), getObjectProperty(obj, "sfx_volume", 0),
-                       getObjectProperty(obj, "sfx_max_dist", 500.0), originXYZ, play_near_string, conditions_string))
+                    % (
+                        obj.name, getObjectProperty(obj, "sfx_filename", "some_sound.ogg"),
+                        getObjectProperty(obj, "sfx_rolloff", 0.05), getObjectProperty(obj, "sfx_volume", 0),
+                        getObjectProperty(obj, "sfx_max_dist", 500.0), originXYZ, play_near_string, conditions_string
+                    )
+                )
 
                 if obj.animation_data and obj.animation_data.action and obj.animation_data.action.fcurves and len(
-                        obj.animation_data.action.fcurves) > 0:
+                    obj.animation_data.action.fcurves
+                ) > 0:
                     writeIPO(f, obj.animation_data)
 
                 f.write('  </object>\n')
@@ -693,17 +715,23 @@ class ActionTriggerExporter:
                 if trigger_type == "point":
                     f.write(
                         '  <object type="action-trigger" trigger-type="point" id=\"%s\" action="%s" distance="%s" reenable-timeout="%s" triggered-object="%s" %s/>\n'
-                        % (obj.name, getObjectProperty(obj, "action", ""),
-                           getObjectProperty(obj, "trigger_distance", 5.0),
-                           getObjectProperty(obj, "reenable_timeout", 999999.9),
-                           getObjectProperty(obj, "triggered_object", ""), originXYZ))
+                        % (
+                            obj.name, getObjectProperty(obj, "action", ""),
+                            getObjectProperty(obj, "trigger_distance", 5.0),
+                            getObjectProperty(obj, "reenable_timeout", 999999.9),
+                            getObjectProperty(obj, "triggered_object", ""), originXYZ
+                        )
+                    )
                 elif trigger_type == "cylinder":
                     # divide by 2 to get average size, divide by 2 to get radius from diameter
                     radius = (obj.dimensions.x + obj.dimensions.y) / 4
                     f.write(
                         "  <object type=\"action-trigger\" trigger-type=\"cylinder\" action=\"%s\" xyz=\"%.2f %.2f %.2f\" radius=\"%.2f\" height=\"%.2f\"/>\n"
-                        % (getObjectProperty(obj, "action", ""), obj.location[0], obj.location[2], obj.location[1],
-                           radius, obj.dimensions.z))
+                        % (
+                            getObjectProperty(obj, "action", ""), obj.location[0], obj.location[2], obj.location[1],
+                            radius, obj.dimensions.z
+                        )
+                    )
             except:
                 log_error("Invalid action <" + getObjectProperty(obj, "name", obj.name) + "> ")
 
@@ -778,7 +806,8 @@ class LibraryNodeExporter:
 
                 f.write('  <library name="%s" id=\"%s\" %s>\n' % (lib_name, obj.name, originXYZ))
                 if obj.animation_data and obj.animation_data.action and obj.animation_data.action.fcurves and len(
-                        obj.animation_data.action.fcurves) > 0:
+                    obj.animation_data.action.fcurves
+                ) > 0:
                     writeIPO(f, obj.animation_data)
                 f.write('  </library>\n')
             except:
@@ -846,13 +875,19 @@ class BillboardExporter:
                     fadeout_str = "fadeout=\"true\" start=\"%.2f\" end=\"%.2f\"" % (start, end)
 
                 uv = track_getUVTextures(data)
-                f.write('  <object type="billboard" id=\"%s\" texture="%s" xyz="%.2f %.2f %.2f" \n' %
-                        (obj.name, os.path.basename(uv[0].data[0].image.filepath), obj.location[0], obj.location[2],
-                         obj.location[1]))
-                f.write('             width="%.3f" height="%.3f" %s>\n' % (max(x_max - x_min, z_max - z_min),
-                                                                           y_max - y_min, fadeout_str))
+                f.write(
+                    '  <object type="billboard" id=\"%s\" texture="%s" xyz="%.2f %.2f %.2f" \n' % (
+                        obj.name, os.path.basename(uv[0].data[0].image.filepath), obj.location[0], obj.location[2],
+                        obj.location[1]
+                    )
+                )
+                f.write(
+                    '             width="%.3f" height="%.3f" %s>\n' %
+                    (max(x_max - x_min, z_max - z_min), y_max - y_min, fadeout_str)
+                )
                 if obj.animation_data and obj.animation_data.action and obj.animation_data.action.fcurves and len(
-                        obj.animation_data.action.fcurves) > 0:
+                    obj.animation_data.action.fcurves
+                ) > 0:
                     writeIPO(f, obj.animation_data)
                 f.write('  </object>\n')
 
@@ -880,14 +915,17 @@ class LightsExporter:
             colG = int(obj.data.color[1] * 255)
             colB = int(obj.data.color[2] * 255)
 
-            f.write('  <light %s id=\"%s\" distance="%.2f" energy="%.2f" color="%i %i %i"' %
-                    (getXYZString(obj), obj.name, obj.data.distance, obj.data.energy, colR, colG, colB))
+            f.write(
+                '  <light %s id=\"%s\" distance="%.2f" energy="%.2f" color="%i %i %i"' %
+                (getXYZString(obj), obj.name, obj.data.distance, obj.data.energy, colR, colG, colB)
+            )
             if_condition = getObjectProperty(obj, "if", "")
             if len(if_condition) > 0:
                 f.write(' if=\"%s\"' % if_condition)
             f.write('>\n')
             if obj.animation_data and obj.animation_data.action and obj.animation_data.action.fcurves and len(
-                    obj.animation_data.action.fcurves) > 0:
+                obj.animation_data.action.fcurves
+            ) > 0:
                 writeIPO(f, obj.animation_data)
             f.write('  </light>\n')
 
@@ -910,9 +948,12 @@ class LightShaftExporter:
 
     def export(self, f):
         for obj in self.m_objects:
-            f.write('  <lightshaft %s id=\"%s\" opacity="%.2f" color="%s"/>\n' %
-                    (getXYZString(obj), obj.name, getObjectProperty(obj, "lightshaft_opacity", 0.7),
-                     getObjectProperty(obj, "lightshaft_color", "255 255 255")))
+            f.write(
+                '  <lightshaft %s id=\"%s\" opacity="%.2f" color="%s"/>\n' % (
+                    getXYZString(obj), obj.name, getObjectProperty(obj, "lightshaft_opacity", 0.7),
+                    getObjectProperty(obj, "lightshaft_color", "255 255 255")
+                )
+            )
 
 
 # ------------------------------------------------------------------------------
@@ -964,8 +1005,9 @@ class NavmeshExporter:
                 navmeshfile.write('<vertices>\n')
 
                 for vert in bm.verts:
-                    navmeshfile.write('<vertex x="%f" y="%f" z="%f" />\n' % ((om * vert.co).x, (om * vert.co).z,
-                                                                             (om * vert.co).y))
+                    navmeshfile.write(
+                        '<vertex x="%f" y="%f" z="%f" />\n' % ((om * vert.co).x, (om * vert.co).z, (om * vert.co).y)
+                    )
 
                 navmeshfile.write('</vertices>\n')
                 navmeshfile.write('<faces>\n')
@@ -975,7 +1017,8 @@ class NavmeshExporter:
                     if len(face.verts) != 4:
                         log_error('Use only quad for navmesh, face %d not quad!' % face.index)
                         log_error(
-                            'To find it out, select the navmesh object and toggle edit mode, than in python console:')
+                            'To find it out, select the navmesh object and toggle edit mode, than in python console:'
+                        )
                         log_error('me = bpy.data.objects[\'%s\'].data' % self.m_objects[0].name)
                         log_error('import bmesh')
                         log_error('bm = bmesh.from_edit_mesh(me)')
@@ -1054,8 +1097,8 @@ class DrivelineExporter:
             self.lDrivelines = [None]
 
         mainDriveline = self.lDrivelines[0]
-        if mainDriveline is None and getSceneProperty(bpy.data.scenes[0], 'is_stk_node',
-                                                      'false') != 'true' and not (is_arena or is_soccer):
+        if mainDriveline is None and getSceneProperty(bpy.data.scenes[0], 'is_stk_node', 'false'
+                                                      ) != 'true' and not (is_arena or is_soccer):
             log_error("No main driveline found")
 
         self.lChecks = self.lChecks + self.lCannons    # cannons at the end, see #1386
@@ -1078,8 +1121,9 @@ class DrivelineExporter:
                     continue
                 xyz = "%f %f %f" % (i.location[0], i.location[2], i.location[1])
                 start = getObjectProperty(i, "start", 5)
-                f.write("    <camera type=\"%s\" xyz=\"%s\" distance=\"%s\"/> <!-- %s -->\n" % (type, xyz, start,
-                                                                                                i.name))
+                f.write(
+                    "    <camera type=\"%s\" xyz=\"%s\" distance=\"%s\"/> <!-- %s -->\n" % (type, xyz, start, i.name)
+                )
             f.write("  </end-cameras>\n")
 
     # --------------------------------------------------------------------------
@@ -1170,9 +1214,10 @@ class DrivelineExporter:
                 # distance, and then the camera
                 lEndCameras[i] = (driveline_index, quad_index_camera, cam)
             except:
-                log_warning("Problem with the end camera '%s'. Check if the main driveline is " +
-                            "properly defined (check warning messages), and the " +
-                            "settings of the camera." % cam.name)
+                log_warning(
+                    "Problem with the end camera '%s'. Check if the main driveline is " +
+                    "properly defined (check warning messages), and the " + "settings of the camera." % cam.name
+                )
 
         lEndCameras.sort()
 
@@ -1242,8 +1287,9 @@ class DrivelineExporter:
         f.write("<?xml version=\"1.0\"?>\n")
         f.write("<!-- Generated with script from SVN rev %s -->\n" % getScriptVersion())
         f.write("<quads>\n")
-        f.write('  <height-testing min="%f" max="%f"/>\n' % (lSorted[0].min_height_testing,
-                                                             lSorted[0].max_height_testing))
+        f.write(
+            '  <height-testing min="%f" max="%f"/>\n' % (lSorted[0].min_height_testing, lSorted[0].max_height_testing)
+        )
 
         for driveline in lSorted:
             driveline.writeQuads(f)
@@ -1259,8 +1305,10 @@ class DrivelineExporter:
         f.write("<!-- Generated with script from SVN rev %s -->\n" % getScriptVersion())
         f.write("<graph>\n")
         f.write("  <!-- First define all nodes of the graph, and what quads they represent -->\n")
-        f.write("  <node-list from-quad=\"%d\" to-quad=\"%d\"/>  <!-- map each quad to a node  -->\n" %
-                (0, lSorted[-1].getLastQuadIndex()))
+        f.write(
+            "  <node-list from-quad=\"%d\" to-quad=\"%d\"/>  <!-- map each quad to a node  -->\n" %
+            (0, lSorted[-1].getLastQuadIndex())
+        )
 
         f.write("  <!-- Define the main loop -->\n")
         last_main = None
@@ -1305,8 +1353,10 @@ class DrivelineExporter:
                 #            %(to.getName(), fr, to))
                 dWrittenEdges[(fr, to)] = 1
             if driveline.getFirstQuadIndex() < driveline.getLastQuadIndex():
-                f.write("  <edge-line from=\"%d\" to=\"%d\"/>\n" % (driveline.getFirstQuadIndex(),
-                                                                    driveline.getLastQuadIndex()))
+                f.write(
+                    "  <edge-line from=\"%d\" to=\"%d\"/>\n" %
+                    (driveline.getFirstQuadIndex(), driveline.getLastQuadIndex())
+                )
             fr = driveline.getLastQuadIndex()
             to = driveline.computeSuccessor(lSorted)
             if (fr, to) not in dWrittenEdges:
@@ -1404,8 +1454,10 @@ class DrivelineExporter:
         if not strict_lapline:
             f.write("    <check-lap kind=\"lap\" %s %s />\n" % (sSameGroup, activate))
         else:
-            f.write("    <check-line kind=\"lap\" p1=\"%.2f %.2f\" p2=\"%.2f %.2f\"\n" % (lap[0][0], lap[0][1],
-                                                                                          lap[1][0], lap[1][1]))
+            f.write(
+                "    <check-line kind=\"lap\" p1=\"%.2f %.2f\" p2=\"%.2f %.2f\"\n" %
+                (lap[0][0], lap[0][1], lap[1][0], lap[1][1])
+            )
             f.write("                min-height=\"%.2f\" %s %s/>\n" % (min_h, sSameGroup, activate))
 
         ind = 1
@@ -1490,9 +1542,12 @@ class DrivelineExporter:
                     min_h = mesh.vertices[0].co[2]
                     if mesh.vertices[1].co[2] < min_h:
                         min_h = mesh.vertices[1].co[2]
-                    f.write("    <check-line%sp1=\"%.2f %.2f\" p2=\"%.2f %.2f\"\n" %
-                            (kind, mesh.vertices[0].co[0], mesh.vertices[0].co[1], mesh.vertices[1].co[0],
-                             mesh.vertices[1].co[1]))
+                    f.write(
+                        "    <check-line%sp1=\"%.2f %.2f\" p2=\"%.2f %.2f\"\n" % (
+                            kind, mesh.vertices[0].co[0], mesh.vertices[0].co[1], mesh.vertices[1].co[0],
+                            mesh.vertices[1].co[1]
+                        )
+                    )
 
                     f.write("                min-height=\"%.2f\" same-group=\"%s\"/>\n" % (min_h, sSameGroup.strip()))
                 else:
@@ -1507,8 +1562,10 @@ class DrivelineExporter:
                     radius = math.sqrt(radius)
                     inner_radius = getObjectProperty(obj, "inner_radius", radius)
                     color = getObjectProperty(obj, "color", "255 120 120 120")
-                    f.write("    <check-sphere%sxyz=\"%.2f %.2f %.2f\" radius=\"%.2f\"\n" %
-                            (kind, obj.location[0], obj.location[2], obj.location[1], radius))
+                    f.write(
+                        "    <check-sphere%sxyz=\"%.2f %.2f %.2f\" radius=\"%.2f\"\n" %
+                        (kind, obj.location[0], obj.location[2], obj.location[1], radius)
+                    )
                     f.write("                  same-group=\"%s\"\n" % sSameGroup.strip())
                     f.write("                  inner-radius=\"%.2f\" color=\"%s\"/>\n" % (inner_radius, color))
             except Exception as exc:
@@ -1532,8 +1589,10 @@ class DrivelineExporter:
         if getObjectProperty(goal, "first_goal", "false") == "true":
             first_goal_string = " first_goal=\"true\" "
 
-        f.write('    <goal p1="%.2f %.2f %.2f" p2="%.2f %.2f %.2f" %s/>\n' %
-                (goal_pt1[0], goal_pt1[2], goal_pt1[1], goal_pt2[0], goal_pt2[2], goal_pt2[1], first_goal_string))
+        f.write(
+            '    <goal p1="%.2f %.2f %.2f" p2="%.2f %.2f %.2f" %s/>\n' %
+            (goal_pt1[0], goal_pt1[2], goal_pt1[1], goal_pt2[0], goal_pt2[2], goal_pt2[1], first_goal_string)
+        )
 
     # Writes out all cannon checklines.
     def writeCannon(self, f, cannon):
@@ -1560,8 +1619,11 @@ class DrivelineExporter:
 
         f.write(
             '    <cannon p1="%.2f %.2f %.2f" p2="%.2f %.2f %.2f" target-p1="%.2f %.2f %.2f" target-p2="%.2f %.2f %.2f">\n'
-            % (start_pt1[0], start_pt1[2], start_pt1[1], start_pt2[0], start_pt2[2], start_pt2[1], end_pt1[0],
-               end_pt1[2], end_pt1[1], end_pt2[0], end_pt2[2], end_pt2[1]))
+            % (
+                start_pt1[0], start_pt1[2], start_pt1[1], start_pt2[0], start_pt2[2], start_pt2[1], end_pt1[0],
+                end_pt1[2], end_pt1[1], end_pt2[0], end_pt2[2], end_pt2[1]
+            )
+        )
 
         if len(curvename) > 0:
             writeBezierCurve(f, bpy.data.objects[curvename], getObjectProperty(start, "cannonspeed", 50.0), "const")
@@ -1703,9 +1765,12 @@ class Driveline:
                 return
 
             cp.append(
-                (self.mesh.vertices[self.lLeft[-1]].co[i] + first_driveline.mesh.vertices[first_driveline.lLeft[0]]
-                 .co[i] + self.mesh.vertices[self.lRight[-1]].co[i] +
-                 first_driveline.mesh.vertices[first_driveline.lRight[0]].co[i]) * 0.25)
+                (
+                    self.mesh.vertices[self.lLeft[-1]].co[i] + first_driveline.mesh.vertices[first_driveline.lLeft[0]]
+                    .co[i] + self.mesh.vertices[self.lRight[-1]].co[i] +
+                    first_driveline.mesh.vertices[first_driveline.lRight[0]].co[i]
+                ) * 0.25
+            )
 
         self.lCenter.append(cp)
         self.lLeft.append(None)
@@ -1741,7 +1806,8 @@ class Driveline:
         if len(self.lStart) != 2:
             log_error(
                 "Driveline '%s' is incorrectly formed, cannot find the two 'antennas' that indicate where the driveline starts."
-                % self.name)
+                % self.name
+            )
             self.start_point = (0, 0, 0)
             return
 
@@ -1753,8 +1819,10 @@ class Driveline:
 
         # Save the middle of the first quad, which is used later for neareast
         # quads computations.
-        self.start_point = ((start_coord_1[0] + start_coord_2[0]) * 0.5, (start_coord_1[1] + start_coord_2[1]) * 0.5,
-                            (start_coord_1[2] + start_coord_2[2]) * 0.5)
+        self.start_point = (
+            (start_coord_1[0] + start_coord_2[0]) * 0.5, (start_coord_1[1] + start_coord_2[1]) * 0.5,
+            (start_coord_1[2] + start_coord_2[2]) * 0.5
+        )
 
     # --------------------------------------------------------------------------
     # Returns the startline of this driveline
@@ -1846,8 +1914,9 @@ class Driveline:
             if len(next_left) != 1 and not warning_printed:
                 lcoord = self.mesh.vertices[self.lLeft[-1]].co
                 rcoord = self.mesh.vertices[self.lRight[-1]].co
-                log_warning("Broken driveline at or around point ({0}, {1}, {2})".format(
-                    lcoord[0], lcoord[1], lcoord[2]))
+                log_warning(
+                    "Broken driveline at or around point ({0}, {1}, {2})".format(lcoord[0], lcoord[1], lcoord[2])
+                )
                 print("Potential successors :")
                 for i in range(len(next_left)):
                     nextco = self.mesh.vertices[next_left[i]].co
@@ -1881,8 +1950,11 @@ class Driveline:
             if len(next_right) == 0:
                 lcoord = self.mesh.vertices[self.lLeft[-1]].co
                 rcoord = self.mesh.vertices[self.lRight[-1]].co
-                log_warning("Malformed driveline at or around points ({0}, {1}, {2}) and ({3}, {4}, {5})".format(
-                    lcoord[0], lcoord[1], lcoord[2], rcoord[0], rcoord[1], rcoord[2]))
+                log_warning(
+                    "Malformed driveline at or around points ({0}, {1}, {2}) and ({3}, {4}, {5})".format(
+                        lcoord[0], lcoord[1], lcoord[2], rcoord[0], rcoord[1], rcoord[2]
+                    )
+                )
                 print("No more vertices on right side of quad line, but there are")
                 print("still points on the left side. Check the points:")
                 print("left: ", lcoord[0], lcoord[1], lcoord[2])
@@ -1894,8 +1966,9 @@ class Driveline:
                 lcoord = self.mesh.vertices[self.lLeft[-1]].co
                 rcoord = self.mesh.vertices[self.lRight[-1]].co
 
-                log_error("Invalid driveline at or around point ({0}, {1}, {2})".format(
-                    rcoord[0], rcoord[1], rcoord[2]))
+                log_error(
+                    "Invalid driveline at or around point ({0}, {1}, {2})".format(rcoord[0], rcoord[1], rcoord[2])
+                )
                 print("Warning: More than one potential succesor found for right driveline point")
                 print(rcoord[0], rcoord[1], rcoord[2], ":")
                 # for i in range(len(next_right)):
@@ -1919,8 +1992,11 @@ class Driveline:
             cp = []
             for i in range(3):
                 cp.append(
-                    (self.mesh.vertices[self.lLeft[-2]].co[i] + self.mesh.vertices[self.lLeft[-1]].co[i] +
-                     self.mesh.vertices[self.lRight[-2]].co[i] + self.mesh.vertices[self.lRight[-1]].co[i]) * 0.25)
+                    (
+                        self.mesh.vertices[self.lLeft[-2]].co[i] + self.mesh.vertices[self.lLeft[-1]].co[i] +
+                        self.mesh.vertices[self.lRight[-2]].co[i] + self.mesh.vertices[self.lRight[-1]].co[i]
+                    ) * 0.25
+                )
             self.lCenter.append(cp)
 
         if count >= max_count and not warning_printed:
@@ -1944,16 +2020,21 @@ class Driveline:
             if not_connected:
                 log_warning(
                     "Warning, driveline '%s' appears to be broken in separate sections. Vertex at %f %f %f is not connected with the rest"
-                    % (self.name, self.mesh.vertices[not_connected].co[0], self.mesh.vertices[not_connected].co[1],
-                       self.mesh.vertices[not_connected].co[2]))
+                    % (
+                        self.name, self.mesh.vertices[not_connected].co[0], self.mesh.vertices[not_connected].co[1],
+                        self.mesh.vertices[not_connected].co[2]
+                    )
+                )
 
         # Now remove the first two points, which are only used to indicate
         # the starting point:
         del self.lLeft[0]
         del self.lRight[0]
-        self.end_point = ((self.mesh.vertices[self.lLeft[-1]].co[0] + self.mesh.vertices[self.lRight[-1]].co[0]) * 0.5,
-                          (self.mesh.vertices[self.lLeft[-1]].co[1] + self.mesh.vertices[self.lRight[-1]].co[1]) * 0.5,
-                          (self.mesh.vertices[self.lLeft[-1]].co[2] + self.mesh.vertices[self.lRight[-1]].co[2]) * 0.5)
+        self.end_point = (
+            (self.mesh.vertices[self.lLeft[-1]].co[0] + self.mesh.vertices[self.lRight[-1]].co[0]) * 0.5,
+            (self.mesh.vertices[self.lLeft[-1]].co[1] + self.mesh.vertices[self.lRight[-1]].co[1]) * 0.5,
+            (self.mesh.vertices[self.lLeft[-1]].co[2] + self.mesh.vertices[self.lRight[-1]].co[2]) * 0.5
+        )
 
     # --------------------------------------------------------------------------
     # Returns the end point of this driveline
@@ -2060,8 +2141,11 @@ class Driveline:
         # continue to drive on the shortcut.
         f.write(
             "  <quad%s%s%sp0=\"%.3f %.3f %.3f\" p1=\"%.3f %.3f %.3f\" p2=\"%.3f %.3f %.3f\" p3=\"%.3f %.3f %.3f\"/>\n"
-            % (sInv, sAIIgnore, sDirection, l[0], l[2], l[1], r[0], r[2], r[1], r1[0], r1[2], r1[1], l1[0], l1[2],
-               l1[1]))
+            % (
+                sInv, sAIIgnore, sDirection, l[0], l[2], l[1], r[0], r[2], r[1], r1[0], r1[2], r1[1], l1[0], l1[2],
+                l1[1]
+            )
+        )
         for i in range(1, max_index):
             if self.lRight[i + 1] is None:
                 # broken driveline (messages will already have been printed)
@@ -2069,12 +2153,17 @@ class Driveline:
 
             l1 = self.mesh.vertices[self.lLeft[i + 1]].co
             r1 = self.mesh.vertices[self.lRight[i + 1]].co
-            f.write("  <quad%s%sp0=\"%d:3\" p1=\"%d:2\" p2=\"%.3f %.3f %.3f\" p3=\"%.3f %.3f %.3f\"/>\n" %
-                    (sInv, sDirection, self.global_quad_index_start + i - 1, self.global_quad_index_start + i - 1,
-                     r1[0], r1[2], r1[1], l1[0], l1[2], l1[1]))
+            f.write(
+                "  <quad%s%sp0=\"%d:3\" p1=\"%d:2\" p2=\"%.3f %.3f %.3f\" p3=\"%.3f %.3f %.3f\"/>\n" % (
+                    sInv, sDirection, self.global_quad_index_start + i - 1, self.global_quad_index_start + i - 1,
+                    r1[0], r1[2], r1[1], l1[0], l1[2], l1[1]
+                )
+            )
         if self.is_last_main:
-            f.write("  <quad%sp0=\"%d:3\" p1=\"%d:2\" p2=\"0:1\" p3=\"0:0\"/>\n" %
-                    (sInv, self.global_quad_index_start + max_index - 1, self.global_quad_index_start + max_index - 1))
+            f.write(
+                "  <quad%sp0=\"%d:3\" p1=\"%d:2\" p2=\"0:1\" p3=\"0:0\"/>\n" %
+                (sInv, self.global_quad_index_start + max_index - 1, self.global_quad_index_start + max_index - 1)
+            )
 
 
 # ==============================================================================
@@ -2111,7 +2200,8 @@ class TrackExport:
             filepath=sPath + "/" + name,
             export_tangent=False,
             overwrite_without_asking=True,
-            applymodifiers=applymodifiers)
+            applymodifiers=applymodifiers
+        )
         the_scene.obj_list = []
         #bpy.ops.screen.spm_export.skip_dialog = False
         # setObjList([])
@@ -2415,11 +2505,15 @@ class TrackExport:
             flags.append("geometry-level=\"%d\"" % detail_level)
 
         if parent and parent.type == "ARMATURE":
-            f.write("  <object id=\"%s\" type=\"%s\" %s %s>\n" % (obj.name, objectType, getXYZHPRString(parent),
-                                                                  ' '.join(flags)))
+            f.write(
+                "  <object id=\"%s\" type=\"%s\" %s %s>\n" %
+                (obj.name, objectType, getXYZHPRString(parent), ' '.join(flags))
+            )
         else:
-            f.write("  <object id=\"%s\" type=\"%s\" %s %s>\n" % (obj.name, objectType, getXYZHPRString(obj),
-                                                                  ' '.join(flags)))
+            f.write(
+                "  <object id=\"%s\" type=\"%s\" %s %s>\n" %
+                (obj.name, objectType, getXYZHPRString(obj), ' '.join(flags))
+            )
 
         if lAnim:
             writeAnimatedTextures(f, lAnim)
@@ -2458,9 +2552,11 @@ class TrackExport:
                 additional_prop_str += " geometry-level=\"%d\"" % detail_level
 
             f.write(
-                "    <static-object lod_distance=\"%i\" lod_group=\"%s\" model=\"%s\" %s interaction=\"%s\"%s/>\n" %
-                (props['distance'], props['groupname'], spm_name, getXYZHPRString(obj),
-                 getObjectProperty(obj, "interaction", "static"), additional_prop_str))
+                "    <static-object lod_distance=\"%i\" lod_group=\"%s\" model=\"%s\" %s interaction=\"%s\"%s/>\n" % (
+                    props['distance'], props['groupname'], spm_name, getXYZHPRString(obj),
+                    getObjectProperty(obj, "interaction", "static"), additional_prop_str
+                )
+            )
 
     # --------------------------------------------------------------------------
 
@@ -2788,13 +2884,15 @@ class TrackExport:
                 loddistance = getObjectProperty(obj, "lod_distance", 60.0)
                 if len(lod_model_name) == 0:
                     lod_model_name = obj.name
-                lLODModels[group_name].append({
-                    'object': obj,
-                    'groupname': group_name,
-                    'distance': loddistance,
-                    'filename': lod_model_name,
-                    'modifiers': True
-                })
+                lLODModels[group_name].append(
+                    {
+                        'object': obj,
+                        'groupname': group_name,
+                        'distance': loddistance,
+                        'filename': lod_model_name,
+                        'modifiers': True
+                    }
+                )
 
             elif type == 'single_lod':
                 lod_model_name = getObjectProperty(obj, "name", obj.name)
@@ -2807,30 +2905,36 @@ class TrackExport:
 
                 if getObjectProperty(obj, "nomodifierautolod", "false") == "true":
                     loddistance = getObjectProperty(obj, "nomodierlod_distance", 30.0)
-                    lLODModels[group_name].append({
-                        'object': obj,
-                        'groupname': group_name,
-                        'distance': loddistance,
-                        'filename': lod_model_name,
-                        'modifiers': True
-                    })
+                    lLODModels[group_name].append(
+                        {
+                            'object': obj,
+                            'groupname': group_name,
+                            'distance': loddistance,
+                            'filename': lod_model_name,
+                            'modifiers': True
+                        }
+                    )
                     loddistance = getObjectProperty(obj, "lod_distance", 60.0)
-                    lLODModels[group_name].append({
-                        'object': obj,
-                        'groupname': group_name,
-                        'distance': loddistance,
-                        'filename': lod_model_name + "_mid",
-                        'modifiers': False
-                    })
+                    lLODModels[group_name].append(
+                        {
+                            'object': obj,
+                            'groupname': group_name,
+                            'distance': loddistance,
+                            'filename': lod_model_name + "_mid",
+                            'modifiers': False
+                        }
+                    )
                 else:
                     loddistance = getObjectProperty(obj, "lod_distance", 60.0)
-                    lLODModels[group_name].append({
-                        'object': obj,
-                        'groupname': group_name,
-                        'distance': loddistance,
-                        'filename': lod_model_name,
-                        'modifiers': True
-                    })
+                    lLODModels[group_name].append(
+                        {
+                            'object': obj,
+                            'groupname': group_name,
+                            'distance': loddistance,
+                            'filename': lod_model_name,
+                            'modifiers': True
+                        }
+                    )
 
                 # this object is both a model and an instance, so also add it to the list of objects, where it will be exported as a LOD instance
                 if export_non_static:
@@ -2896,8 +3000,10 @@ class TrackExport:
             f.write("  <subtitles>\n")
 
             for subtitle in subtitles:
-                f.write("        <subtitle from=\"%i\" to=\"%i\" text=\"%s\"/>\n" % (subtitle[0], subtitle[1],
-                                                                                     subtitle[2]))
+                f.write(
+                    "        <subtitle from=\"%i\" to=\"%i\" text=\"%s\"/>\n" %
+                    (subtitle[0], subtitle[1], subtitle[2])
+                )
 
             f.write("  </subtitles>\n")
 
@@ -3017,12 +3123,14 @@ class TrackExport:
                 sphere_percent = getSceneProperty(scene, "sky_sphere_percent", 1.3)
                 speed_x = getSceneProperty(scene, "sky_speed_x", 0.0)
                 speed_y = getSceneProperty(scene, "sky_speed_y", 0.0)
-                f.write("""
+                f.write(
+                    """
   <sky-dome texture=\"%s\" %s
             horizontal=\"%s\" vertical=\"%s\" 
             texture-percent=\"%s\" sphere-percent=\"%s\"
             speed-x=\"%s\" speed-y=\"%s\" />
-""" % (texture, sphericalHarmonicsStr, hori, verti, tex_percent, sphere_percent, speed_x, speed_y))
+""" % (texture, sphericalHarmonicsStr, hori, verti, tex_percent, sphere_percent, speed_x, speed_y)
+                )
             elif sky == "box":
                 lTextures = [
                     getSceneProperty(scene, "sky_texture2", ""),
@@ -3054,7 +3162,8 @@ class TrackExport:
         stk_delete_old_files_on_export = False
         try:
             stk_delete_old_files_on_export = bpy.context.user_preferences.addons[
-                'stk_track'].preferences.stk_delete_old_files_on_export
+                'stk_track'
+            ].preferences.stk_delete_old_files_on_export
         except:
             pass
 
@@ -3208,7 +3317,8 @@ class TrackExport:
                 filepath=sPath + "/" + sTrackName,
                 do_sp=False,
                 export_tangent=False,
-                overwrite_without_asking=True)
+                overwrite_without_asking=True
+            )
         scene.obj_list = []
 
         # write_spm_file(sFilename+"_track.spm")
@@ -3244,8 +3354,10 @@ def savescene_callback(sFilename, exportImages, exportDrivelines, exportScene, e
     global log
     log = []
 
-    TrackExport(sFilename, exportImages, exportDrivelines and
-                getSceneProperty(bpy.data.scenes[0], 'is_stk_node', 'false') != 'true', exportScene, exportMaterials)
+    TrackExport(
+        sFilename, exportImages, exportDrivelines and
+        getSceneProperty(bpy.data.scenes[0], 'is_stk_node', 'false') != 'true', exportScene, exportMaterials
+    )
 
 
 thelist = []

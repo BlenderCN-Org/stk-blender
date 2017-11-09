@@ -177,8 +177,9 @@ def writeMatrixAsLocRotScale(mat):
     loc = loc.to_tuple()
     rot = (-rot.x, -rot.z, -rot.y, rot.w)
     scale = scale.to_tuple()
-    return struct.pack('<ffffffffff', loc[0], loc[2], loc[1], rot[0], rot[1], rot[2], rot[3], scale[0], scale[2],
-                       scale[1])
+    return struct.pack(
+        '<ffffffffff', loc[0], loc[2], loc[1], rot[0], rot[1], rot[2], rot[3], scale[0], scale[2], scale[1]
+    )
 
 
 def getUniqueFrame(armature):
@@ -244,8 +245,10 @@ def getUniqueFrame(armature):
                 pass
 
     if len(unique_frame) == 0:
-        print('No keyframes found for armature: {},'
-              ' please remove the armature if it contains no keyframe.'.format(armature.name))
+        print(
+            'No keyframes found for armature: {},'
+            ' please remove the armature if it contains no keyframe.'.format(armature.name)
+        )
         assert False
     unique_frame.sort()
     # for frame in unique_frame:
@@ -509,10 +512,11 @@ class Triangle:
     def setHashString(self):
         self.m_hash = hash(
             str(round(self.m_position[0][0], 7)) + str(round(self.m_position[0][1], 7)) + str(
-                round(self.m_position[0][2], 7)) + str(round(self.m_position[1][0], 7)) + str(
-                    round(self.m_position[1][1], 7)) + str(round(self.m_position[1][2], 7)) + str(
-                        round(self.m_position[2][0], 7)) + str(round(self.m_position[2][1], 7)) + str(
-                            round(self.m_position[2][2], 7)))
+                round(self.m_position[0][2], 7)
+            ) + str(round(self.m_position[1][0], 7)) + str(round(self.m_position[1][1], 7)) +
+            str(round(self.m_position[1][2], 7)) + str(round(self.m_position[2][0], 7)) +
+            str(round(self.m_position[2][1], 7)) + str(round(self.m_position[2][2], 7))
+        )
 
 
 # ==== Write SPM File ====
@@ -817,9 +821,10 @@ def writeSPMFile(filename, objects=[]):
                     tangent.normalize()
                     vertex.m_tangent =\
                         (tangent[0], tangent[1], tangent[2], bitangent_sign)
-                vbo_ibo += vertex.writeVertex(all_triangles[t_idx - 1].m_texture_one != "",
-                                              all_triangles[t_idx - 1].m_texture_two != "", export_vcolor,
-                                              arm_count != 0, need_export_tangent)
+                vbo_ibo += vertex.writeVertex(
+                    all_triangles[t_idx - 1].m_texture_one != "", all_triangles[t_idx - 1].m_texture_two != "",
+                    export_vcolor, arm_count != 0, need_export_tangent
+                )
             for index in indices:
                 if len(vertices) > 255:
                     vbo_ibo += writeUint16(index)

@@ -236,17 +236,19 @@ class StkProperty:
 #!                  the user-visible string to apear in the dropdown for an object
 class StkObjectReferenceProperty(StkProperty):
 
-    def __init__(self,
-                 id,
-                 fullid,
-                 name,
-                 contextLevel,
-                 default,
-                 filter,
-                 doc="Select an object",
-                 static_objects=[],
-                 obj_identifier=lambda self, obj: obj.name,
-                 obj_text=lambda self, obj: (obj.name + ((" (" + obj["name"] + ")") if "name" in obj else ""))):
+    def __init__(
+        self,
+        id,
+        fullid,
+        name,
+        contextLevel,
+        default,
+        filter,
+        doc="Select an object",
+        static_objects=[],
+        obj_identifier=lambda self, obj: obj.name,
+        obj_text=lambda self, obj: (obj.name + ((" (" + obj["name"] + ")") if "name" in obj else ""))
+    ):
         super(StkObjectReferenceProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
         self.doc = doc
 
@@ -385,7 +387,8 @@ class StkEnumProperty(StkProperty):
         class STK_SetComboValue(bpy.types.Operator):
 
             value = bpy.props.EnumProperty(
-                attr="values", name="values", default=default_value + "", items=values_for_blender)
+                attr="values", name="values", default=default_value + "", items=values_for_blender
+            )
 
             bl_idname = generateOpName("screen.stk_set_", fullid, id)
             bl_label = ("SuperTuxKart set " + id)
@@ -488,14 +491,9 @@ class StkCombinableEnumProperty(StkProperty):
 #! A pseudo-property that only displays some text
 class StkLabelPseudoProperty(StkProperty):
 
-    def __init__(self,
-                 id,
-                 name,
-                 default=0.0,
-                 doc="(No documentation defined for this element)",
-                 fullid="",
-                 min=None,
-                 max=None):
+    def __init__(
+        self, id, name, default=0.0, doc="(No documentation defined for this element)", fullid="", min=None, max=None
+    ):
         super(StkLabelPseudoProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
         self.default
         self.doc = doc
@@ -513,14 +511,9 @@ class StkLabelPseudoProperty(StkProperty):
 class StkFloatProperty(StkProperty):
 
     #! @param name   User-visible name for this property
-    def __init__(self,
-                 id,
-                 name,
-                 default=0.0,
-                 doc="(No documentation defined for this element)",
-                 fullid="",
-                 min=None,
-                 max=None):
+    def __init__(
+        self, id, name, default=0.0, doc="(No documentation defined for this element)", fullid="", min=None, max=None
+    ):
         super(StkFloatProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
         self.default
         self.doc = doc
@@ -540,14 +533,9 @@ class StkFloatProperty(StkProperty):
 class StkIntProperty(StkProperty):
 
     #! @param name   User-visible name for this property
-    def __init__(self,
-                 id,
-                 name,
-                 default=0,
-                 doc="(No documentation defined for this element)",
-                 fullid="",
-                 min=None,
-                 max=None):
+    def __init__(
+        self, id, name, default=0, doc="(No documentation defined for this element)", fullid="", min=None, max=None
+    ):
         super(StkIntProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
         self.doc = doc
         self.min = min
@@ -560,14 +548,16 @@ class StkIntProperty(StkProperty):
 class StkProperyGroup(StkProperty):
 
     #! A floating-point property
-    def __init__(self,
-                 id,
-                 name,
-                 contextLevel,
-                 default="false",
-                 subproperties=[],
-                 fullid="",
-                 doc="(No documentation defined for this element)"):
+    def __init__(
+        self,
+        id,
+        name,
+        contextLevel,
+        default="false",
+        subproperties=[],
+        fullid="",
+        doc="(No documentation defined for this element)"
+    ):
         super(StkProperyGroup, self).__init__(id=id, name=name, default=default, fullid=fullid)
 
         self.contextLevel = contextLevel
@@ -642,15 +632,17 @@ class StkBoolProperty(StkProperty):
     box = True
 
     #! A floating-point property
-    def __init__(self,
-                 id,
-                 name,
-                 contextLevel,
-                 default="false",
-                 subproperties=[],
-                 box=True,
-                 fullid="",
-                 doc="(No documentation defined for this element)"):
+    def __init__(
+        self,
+        id,
+        name,
+        contextLevel,
+        default="false",
+        subproperties=[],
+        box=True,
+        fullid="",
+        doc="(No documentation defined for this element)"
+    ):
         super(StkBoolProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
 
         self.box = box
@@ -713,13 +705,9 @@ class StkBoolProperty(StkProperty):
 class StkColorProperty(StkProperty):
 
     #! A floating-point property
-    def __init__(self,
-                 id,
-                 name,
-                 contextLevel,
-                 default="255 255 255",
-                 fullid="",
-                 doc="(No documentation defined for this item)"):
+    def __init__(
+        self, id, name, contextLevel, default="255 255 255", fullid="", doc="(No documentation defined for this item)"
+    ):
         super(StkColorProperty, self).__init__(id=id, name=name, default=default, fullid=fullid)
 
         #! Color picker operator (TODO: this operator is mostly for backwards compatibility with our
@@ -742,7 +730,8 @@ class StkColorProperty(StkProperty):
                 max=1.0,
                 soft_min=0.0,
                 soft_max=1.0,
-                default=(1.0, 1.0, 1.0))
+                default=(1.0, 1.0, 1.0)
+            )
 
             def invoke(self, context, event):
 
@@ -788,8 +777,8 @@ class StkColorProperty(StkProperty):
                 if object is None:
                     return
 
-                object[self.property_id] = "%i %i %i" % (self.temp_color[0] * 255, self.temp_color[1] * 255,
-                                                         self.temp_color[2] * 255)
+                object[self.property_id
+                       ] = "%i %i %i" % (self.temp_color[0] * 255, self.temp_color[1] * 255, self.temp_color[2] * 255)
                 return {'FINISHED'}
 
         bpy.utils.register_class(Apply_Color_Operator)
@@ -846,14 +835,18 @@ def parseProperties(node, contextLevel, idprefix):
                         fullid=idprefix + '_' + e.getAttribute("id"),
                         name=e.getAttribute("name"),
                         default=defaultval,
-                        doc=e.getAttribute("doc")))
+                        doc=e.getAttribute("doc")
+                    )
+                )
             else:
                 props.append(
                     StkProperty(
                         id=e.getAttribute("id"),
                         fullid=idprefix + '_' + e.getAttribute("id"),
                         name=e.getAttribute("name"),
-                        default=defaultval))
+                        default=defaultval
+                    )
+                )
 
         elif e.localName == "EnumProp":
 
@@ -898,14 +891,18 @@ def parseProperties(node, contextLevel, idprefix):
                         fullid=idprefix + '_' + e.getAttribute("id"),
                         name=e.getAttribute("name"),
                         default=int(e.getAttribute("default")),
-                        doc=e.getAttribute("doc")))
+                        doc=e.getAttribute("doc")
+                    )
+                )
             else:
                 props.append(
                     StkIntProperty(
                         id=e.getAttribute("id"),
                         fullid=idprefix + '_' + e.getAttribute("id"),
                         name=e.getAttribute("name"),
-                        default=int(e.getAttribute("default"))))
+                        default=int(e.getAttribute("default"))
+                    )
+                )
 
         elif e.localName == "FloatProp":
             args = dict()
@@ -944,7 +941,9 @@ def parseProperties(node, contextLevel, idprefix):
                         name=e.getAttribute("name"),
                         default=e.getAttribute("default"),
                         doc=e.getAttribute("doc"),
-                        contextLevel=contextLevel))
+                        contextLevel=contextLevel
+                    )
+                )
             else:
                 props.append(
                     StkColorProperty(
@@ -952,7 +951,9 @@ def parseProperties(node, contextLevel, idprefix):
                         fullid=idprefix + '_' + e.getAttribute("id"),
                         name=e.getAttribute("name"),
                         default=e.getAttribute("default"),
-                        contextLevel=contextLevel))
+                        contextLevel=contextLevel
+                    )
+                )
 
         elif e.localName == "PropGroup":
 
@@ -1088,7 +1089,8 @@ class PanelBase:
                     generateOpName("screen.stk_tglbool_", curr.fullid, curr.id),
                     text=curr.name,
                     icon=icon,
-                    emboss=False)
+                    emboss=False
+                )
                 row.label(" ")    # force the operator to not maximize
                 if state == "true":
                     if len(curr.subproperties) > 0:
@@ -1109,7 +1111,8 @@ class PanelBase:
                     generateOpName("screen.stk_tglbool_", curr.fullid, curr.id),
                     text="                ",
                     icon=icon,
-                    emboss=False)
+                    emboss=False
+                )
 
                 if state == "true":
                     if len(curr.subproperties) > 0:
@@ -1141,7 +1144,8 @@ class PanelBase:
                         row.operator(
                             generateOpName("screen.stk_set_", curr.fullid, curr.id + "_" + value_id),
                             text=curr.values[value_id].name,
-                            icon=icon)
+                            icon=icon
+                        )
                 else:
                     row.operator('screen.stk_missing_props_' + str(contextLevel))
 
@@ -1175,7 +1179,8 @@ class PanelBase:
                 if curr.id in obj:
                     row.prop(obj, '["' + curr.id + '"]', text="")
                     row.menu(
-                        generateOpName("screen.stk_object_menu_", curr.fullid, curr.id), text="", icon='TRIA_DOWN')
+                        generateOpName("screen.stk_object_menu_", curr.fullid, curr.id), text="", icon='TRIA_DOWN'
+                    )
                 else:
                     row.operator('screen.stk_missing_props_' + str(contextLevel))
 
@@ -1412,13 +1417,16 @@ class STK_AddObject(bpy.types.Operator):
         attr="values",
         name="values",
         default='banana',
-        items=[('banana', 'Banana', 'Banana'), ('item', 'Item (Gift Box)', 'Item (Gift Box)'),
-               ('light', 'Light', 'Light'), ('nitro_big', 'Nitro (Big)',
-                                             'Nitro (big)'), ('nitro_small', 'Nitro (Small)', 'Nitro (Small)'),
-               ('particle_emitter', 'Particle Emitter',
-                'Particle Emitter'), ('sfx_emitter', 'Sound Emitter',
-                                      'Sound Emitter'), ('start', 'Start position (for battle mode)',
-                                                         'Start position (for battle mode)')])
+        items=[
+            ('banana', 'Banana',
+             'Banana'), ('item', 'Item (Gift Box)',
+                         'Item (Gift Box)'), ('light', 'Light', 'Light'), ('nitro_big', 'Nitro (Big)', 'Nitro (big)'),
+            ('nitro_small', 'Nitro (Small)',
+             'Nitro (Small)'), ('particle_emitter', 'Particle Emitter',
+                                'Particle Emitter'), ('sfx_emitter', 'Sound Emitter', 'Sound Emitter'),
+            ('start', 'Start position (for battle mode)', 'Start position (for battle mode)')
+        ]
+    )
 
     def execute(self, context):
         if self.value == 'light':

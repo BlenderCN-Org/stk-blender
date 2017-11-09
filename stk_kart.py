@@ -106,10 +106,14 @@ def saveNitroEmitter(f, lNitroEmitter, path):
         return
 
     f.write('  <nitro-emitter>\n')
-    f.write('    <nitro-emitter-a position = "%f %f %f" />\n' %
-            (lNitroEmitter[0].location.x, lNitroEmitter[0].location.z, lNitroEmitter[0].location.y))
-    f.write('    <nitro-emitter-b position = "%f %f %f" />\n' %
-            (lNitroEmitter[1].location.x, lNitroEmitter[1].location.z, lNitroEmitter[1].location.y))
+    f.write(
+        '    <nitro-emitter-a position = "%f %f %f" />\n' %
+        (lNitroEmitter[0].location.x, lNitroEmitter[0].location.z, lNitroEmitter[0].location.y)
+    )
+    f.write(
+        '    <nitro-emitter-b position = "%f %f %f" />\n' %
+        (lNitroEmitter[1].location.x, lNitroEmitter[1].location.z, lNitroEmitter[1].location.y)
+    )
     f.write('  </nitro-emitter>\n')
 
 
@@ -154,7 +158,8 @@ def saveHeadlights(f, lHeadlights, path, straight_frame):
             global the_scene
             the_scene.obj_list = [obj]
             bpy.ops.screen.spm_export(
-                localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True)
+                localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True
+            )
             the_scene.obj_list = []
 
         flags.append('           model="%s.spm"/>\n' % exported_name)
@@ -217,7 +222,8 @@ def saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame):
             global the_scene
             the_scene.obj_list = [obj]
             bpy.ops.screen.spm_export(
-                localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True)
+                localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True
+            )
             the_scene.obj_list = []
 
         flags.append('           model="%s.spm"/>\n' % exported_name)
@@ -266,8 +272,9 @@ def saveWheels(f, lWheels, path):
         if x < 0:
             index = index + 1
 
-        f.write('    <%s position = "%f %f %f"\n' % (lSides[index], wheel.location.x, wheel.location.z,
-                                                     wheel.location.y))
+        f.write(
+            '    <%s position = "%f %f %f"\n' % (lSides[index], wheel.location.x, wheel.location.z, wheel.location.y)
+        )
         f.write('                 model    = "%s"       />\n' % lWheelNames[index])
         lOldPos = Vector([wheel.location.x, wheel.location.y, wheel.location.z])
         wheel.location = Vector([0, 0, 0])
@@ -279,7 +286,8 @@ def saveWheels(f, lWheels, path):
             localsp=False,
             filepath=path + "/" + lWheelNames[index],
             export_tangent=False,
-            overwrite_without_asking=True)
+            overwrite_without_asking=True
+        )
         the_scene.obj_list = []
 
         wheel.location = lOldPos
@@ -327,14 +335,18 @@ def saveAnimations(f):
                     lMarkersFound.append(markerName)
 
     if (not "straight" in lMarkersFound) or (not "left" in lMarkersFound) or (not "right" in lMarkersFound):
-        log_warning('Could not find markers left/straight/right in frames %i to %i, steering animations may not work' %
-                    (first_frame, last_frame))
+        log_warning(
+            'Could not find markers left/straight/right in frames %i to %i, steering animations may not work' %
+            (first_frame, last_frame)
+        )
 
     if (not "start-winning" in lMarkersFound) or (not "start-losing" in lMarkersFound) or (
-            not "end-winning" in lMarkersFound) or (not "end-losing" in lMarkersFound):
+        not "end-winning" in lMarkersFound
+    ) or (not "end-losing" in lMarkersFound):
         log_warning(
             'Could not find markers for win/lose animations in frames %i to %i, win/lose animations may not work' %
-            (first_frame, last_frame))
+            (first_frame, last_frame)
+        )
 
     if lAnims:
         f.write('  <animations %s = "%s"' % (lAnims[0][0], lAnims[0][1]))
@@ -500,17 +512,24 @@ def exportKart(path):
             loc, rot, scale = hat_object.matrix_world.decompose()
             rot = rot.to_euler('XZY')
             rad2deg = -180.0 / 3.1415926535
-            f.write('  <hat position="%f %f %f"\n       rotation="%f %f %f"'
-                    '\n       scale="%f %f %f"\n       bone="%s"/>\n' %
-                    (loc[0], loc[2], loc[1], rot[0] * rad2deg, rot[2] * rad2deg, rot[1] * rad2deg, scale[0], scale[2],
-                     scale[1], hat_object.parent_bone))
+            f.write(
+                '  <hat position="%f %f %f"\n       rotation="%f %f %f"'
+                '\n       scale="%f %f %f"\n       bone="%s"/>\n' % (
+                    loc[0], loc[2], loc[1], rot[0] * rad2deg, rot[2] * rad2deg, rot[1] * rad2deg, scale[0], scale[2],
+                    scale[1], hat_object.parent_bone
+                )
+            )
         else:
             loc, rot, scale = hat_object.matrix_world.decompose()
             rad2deg = -180.0 / 3.1415926535
             rot = rot.to_euler('XZY')
-            f.write('  <hat position="%f %f %f"\n       rotation="%f %f %f"'
-                    '\n       scale="%f %f %f"/>\n' % (loc[0], loc[2], loc[1], rot[0] * rad2deg, rot[2] * rad2deg,
-                                                       rot[1] * rad2deg, scale[0], scale[2], scale[1]))
+            f.write(
+                '  <hat position="%f %f %f"\n       rotation="%f %f %f"'
+                '\n       scale="%f %f %f"/>\n' % (
+                    loc[0], loc[2], loc[1], rot[0] * rad2deg, rot[2] * rad2deg, rot[1] * rad2deg, scale[0], scale[2],
+                    scale[1]
+                )
+            )
 
     if 'kartLean' in the_scene and len(the_scene['kartLean']) > 0:
         f.write('  <lean max="' + the_scene['kartLean'] + '"/>\n')
@@ -531,7 +550,8 @@ def exportKart(path):
         filepath=path + "/" + model_file,
         export_tangent=False,
         overwrite_without_asking=True,
-        static_mesh_frame=straight_frame)
+        static_mesh_frame=straight_frame
+    )
     the_scene.obj_list = []
 
     #spm_export.write_spm_file(Blender.sys.join(path, model_file), lKart)

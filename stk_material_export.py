@@ -14,14 +14,15 @@ bl_info = {
     "name": "SuperTuxKart Material Exporter",
     "description": "Exports image properties to the SuperTuxKart track format",
     "author": "Joerg Henrichs, Marianne Gagnon",
-    "version": (1,0),
+    "version": (1, 0),
     "blender": (2, 5, 9),
     "api": 31236,
     "location": "File > Export",
-    "warning": '', # used for warning icon and text in addons panel
+    "warning": '',    # used for warning icon and text in addons panel
     "wiki_url": "http://supertuxkart.sourceforge.net/Get_involved",
     "tracker_url": "https://sourceforge.net/apps/trac/supertuxkart/",
-    "category": "Import-Export"}
+    "category": "Import-Export"
+}
 
 
 def getScriptVersion():
@@ -31,6 +32,7 @@ def getScriptVersion():
     except:
         return "Unknown"
 
+
 import bpy
 import bpy.path
 import os
@@ -39,41 +41,46 @@ import os
 # Gets an id property of an object, returning the default if the id property
 # is not set. If set_value_if_undefined is set and the property is not
 # defined, this function will also set the property to this default value.
+
+
 def getIdProperty(obj, name, default="", set_value_if_undefined=1):
     import traceback
     try:
         prop = obj[name]
         if isinstance(prop, str):
-            return obj[name].replace('&', '&amp;') # this is XML
+            return obj[name].replace('&', '&amp;')    # this is XML
         else:
             return prop
     except:
-        if default!=None and set_value_if_undefined:
+        if default != None and set_value_if_undefined:
             obj[name] = default
     return default
 
+
 # --------------------------------------------------------------------------
 # Write several ways of writing true/false as Y/N
+
+
 def convertTextToYN(sText):
     sTemp = sText.strip().upper()
-    if sTemp=="0" or sTemp[0]=="N" or sTemp=="FALSE":
+    if sTemp == "0" or sTemp[0] == "N" or sTemp == "FALSE":
         return "N"
     else:
         return "Y"
 
 
-# Writes the materials files, which includes all texture definitions 
+# Writes the materials files, which includes all texture definitions
 # (remember: Blenders "image" objects are STK's "material" objects)
 # Please use the STKProperty browser!!!
 def writeMaterialsFile(sPath):
-    
+
     # Work around the bug in blender where textures keep disappearing, by forcefully pinning all textures.
     for img in bpy.data.images:
         img.use_fake_user = True
-    
+
     # Read & Write the materials to the file
     limage = bpy.data.images
-    
+
     materfound = False
     for i in limage:
         for sAttrib in i.keys():
@@ -82,68 +89,208 @@ def writeMaterialsFile(sPath):
     if not materfound:
         print("No Materials defined.")
         return
-    
+
     lMaterialProperties = {
-           'fog'                   : {'default': "Y", 'parent': None, 'type': 'bool'},
-           'backface_culling'      : {'default': "Y", 'parent': None, 'type': 'bool'},
-           'below_surface'         : {'default': "N", 'parent': None, 'type': 'bool'},
-           'collision_detect'      : {'default': "N", 'parent': None, 'type': 'bool'},
-           'collision_particles'   : {'default': "", 'parent': 'collision_detect', 'type': 'string'},
-           'collision_reaction'    : {'default': "none", 'parent': 'collision_detect', 'type': 'string'},
-           'clampu'                : {'default': "N", 'parent': None, 'type': 'bool'},
-           'clampv'                : {'default': "N", 'parent': None, 'type': 'bool'},
-           'disable_z_write'       : {'default': "N", 'parent': None, 'type': 'bool'},
-           'falling_effect'        : {'default': "N", 'parent': None, 'type': 'bool'},
-           'gloss_map'             : {'default': "", 'parent': None, 'type': 'string'},
-           'combined_map'          : {'default': "", 'parent': None, 'type': 'string'},
-           'grass_speed'           : {'default': 0.4, 'parent': ('shader','grass'), 'type': 'number'},
-           'grass_amplitude'       : {'default': 0.25, 'parent': ('shader','grass'), 'type': 'number'},
-           'ignore'                : {'default': "N", 'parent': None, 'type': 'bool'},
-           'mask'                  : {'default': "", 'parent': None, 'type': 'string'},
-           'mirror_axis'           : {'default': "none", 'parent': None, 'type': 'string'},
-           'normal_map'            : {'default': "", 'parent': None, 'type': 'string'},
-           'reset'                 : {'default': "N", 'parent': None, 'type': 'bool'},
-           'surface'               : {'default': "N", 'parent': None, 'type': 'bool'},
-           'high_adhesion'         : {'default': "N", 'parent': None, 'type': 'bool'},
-           'has_gravity'           : {'default': "N", 'parent': None, 'type': 'bool'},
-           'slowdown_time'         : {'default': 1.0, 'parent': 'use_slowdown', 'type': 'number'},
-           'max_speed'             : {'default': 1.0, 'parent': 'use_slowdown', 'type': 'number'},
-           'shader'                : {'default': 'solid', 'parent': None, 'type': 'string'},
-           'splatting_texture_1'   : {'default': "", 'parent': ('shader','splatting'), 'type': 'string'},
-           'splatting_texture_2'   : {'default': "", 'parent': ('shader','splatting'), 'type': 'string'},
-           'splatting_texture_3'   : {'default': "", 'parent': ('shader','splatting'), 'type': 'string'},
-           'splatting_texture_4'   : {'default': "", 'parent': ('shader','splatting'), 'type': 'string'},
-           'splatting_lightmap'    : {'default': "", 'parent': ('shader','splatting'), 'type': 'string'},
-           #'water_shader_speed_1'  : {'default': 6.6667, 'parent': ('graphical_effect','water_shader'), 'type': 'number'},
-           #'water_shader_speed_2'  : {'default': 4.0, 'parent': ('graphical_effect','water_shader'), 'type': 'number'},
-           'water_splash'          : {'default': "N", 'parent': None, 'type': 'bool'},
-           'colorizable'           : {'default': "N", 'parent': None, 'type': 'bool'},
-           'colorization_factor'   : {'default': "", 'parent': 'colorizable', 'type': 'number'},
-           'colorization_mask'     : {'default': "", 'parent': 'colorizable', 'type': 'string'},
-           'hue_settings'          : {'default': "", 'parent': 'colorizable', 'type': 'string'}
+        'fog': {
+            'default': "Y",
+            'parent': None,
+            'type': 'bool'
+        },
+        'backface_culling': {
+            'default': "Y",
+            'parent': None,
+            'type': 'bool'
+        },
+        'below_surface': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'collision_detect': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'collision_particles': {
+            'default': "",
+            'parent': 'collision_detect',
+            'type': 'string'
+        },
+        'collision_reaction': {
+            'default': "none",
+            'parent': 'collision_detect',
+            'type': 'string'
+        },
+        'clampu': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'clampv': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'disable_z_write': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'falling_effect': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'gloss_map': {
+            'default': "",
+            'parent': None,
+            'type': 'string'
+        },
+        'combined_map': {
+            'default': "",
+            'parent': None,
+            'type': 'string'
+        },
+        'grass_speed': {
+            'default': 0.4,
+            'parent': ('shader', 'grass'),
+            'type': 'number'
+        },
+        'grass_amplitude': {
+            'default': 0.25,
+            'parent': ('shader', 'grass'),
+            'type': 'number'
+        },
+        'ignore': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'mask': {
+            'default': "",
+            'parent': None,
+            'type': 'string'
+        },
+        'mirror_axis': {
+            'default': "none",
+            'parent': None,
+            'type': 'string'
+        },
+        'normal_map': {
+            'default': "",
+            'parent': None,
+            'type': 'string'
+        },
+        'reset': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'surface': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'high_adhesion': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'has_gravity': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'slowdown_time': {
+            'default': 1.0,
+            'parent': 'use_slowdown',
+            'type': 'number'
+        },
+        'max_speed': {
+            'default': 1.0,
+            'parent': 'use_slowdown',
+            'type': 'number'
+        },
+        'shader': {
+            'default': 'solid',
+            'parent': None,
+            'type': 'string'
+        },
+        'splatting_texture_1': {
+            'default': "",
+            'parent': ('shader', 'splatting'),
+            'type': 'string'
+        },
+        'splatting_texture_2': {
+            'default': "",
+            'parent': ('shader', 'splatting'),
+            'type': 'string'
+        },
+        'splatting_texture_3': {
+            'default': "",
+            'parent': ('shader', 'splatting'),
+            'type': 'string'
+        },
+        'splatting_texture_4': {
+            'default': "",
+            'parent': ('shader', 'splatting'),
+            'type': 'string'
+        },
+        'splatting_lightmap': {
+            'default': "",
+            'parent': ('shader', 'splatting'),
+            'type': 'string'
+        },
+    #'water_shader_speed_1'  : {'default': 6.6667, 'parent': ('graphical_effect','water_shader'), 'type': 'number'},
+    #'water_shader_speed_2'  : {'default': 4.0, 'parent': ('graphical_effect','water_shader'), 'type': 'number'},
+        'water_splash': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'colorizable': {
+            'default': "N",
+            'parent': None,
+            'type': 'bool'
+        },
+        'colorization_factor': {
+            'default': "",
+            'parent': 'colorizable',
+            'type': 'number'
+        },
+        'colorization_mask': {
+            'default': "",
+            'parent': 'colorizable',
+            'type': 'string'
+        },
+        'hue_settings': {
+            'default': "",
+            'parent': 'colorizable',
+            'type': 'string'
+        }
     }
-    
+
     #start_time = bsys.time()
     print("Writing material file --> \t")
 
-    f = open(sPath+"/materials.xml", mode="w", encoding="utf-8")
+    f = open(sPath + "/materials.xml", mode="w", encoding="utf-8")
     f.write("<?xml version=\"1.0\"?>\n")
-    f.write("<!-- Generated with script from SVN rev %s -->\n"%getScriptVersion())
+    f.write("<!-- Generated with script from SVN rev %s -->\n" % getScriptVersion())
     f.write("<materials>\n")
 
     blendfile_dir = os.path.dirname(bpy.data.filepath)
     for i in limage:
-    
+
         # Do not export materials from libraries
         if i.library is not None:
             continue
-    
+
         # Only export materials from the same directory as the blend file
         abs_texture_path = bpy.path.abspath(i.filepath)
         if not bpy.path.is_subdir(abs_texture_path, blendfile_dir):
             continue
-    
-        #iterate through material definitions and collect data
+
+        # iterate through material definitions and collect data
         sImage = ""
         sSFX = ""
         sParticle = ""
@@ -157,43 +304,46 @@ def writeMaterialsFile(sPath):
         l = []
         for sAttrib in i.keys():
             if sAttrib not in l:
-                l.append( (sAttrib, i[sAttrib]) )
-        
-        for AProperty,ADefault in l:
+                l.append((sAttrib, i[sAttrib]))
+
+        for AProperty, ADefault in l:
             # Don't add the (default) values to the property list
             currentValue = getIdProperty(i, AProperty, ADefault, set_value_if_undefined=0)
-            
-            #Correct for all the ways booleans can be represented (true/false;yes/no;zero/not_zero) 
+
+            # Correct for all the ways booleans can be represented (true/false;yes/no;zero/not_zero)
             if AProperty in lMaterialProperties and lMaterialProperties[AProperty]['type'] == 'bool':
                 currentValue = convertTextToYN(currentValue)
-            
-            #These items pertain to the soundeffects (starting with sfx_)
+
+            # These items pertain to the soundeffects (starting with sfx_)
             if AProperty.strip().startswith("sfx_"):
                 strippedName = AProperty.strip()[len("sfx_"):]
-                
-                if strippedName in ['filename', 'rolloff', 'min_speed', 'max_speed', 'min_pitch', 'max_pitch', 'positional', 'volume']:
+
+                if strippedName in [
+                        'filename', 'rolloff', 'min_speed', 'max_speed', 'min_pitch', 'max_pitch', 'positional',
+                        'volume'
+                ]:
                     if isinstance(currentValue, float):
-                        sSFX = "%s %s=\"%.2f\""%(sSFX,strippedName,currentValue)
+                        sSFX = "%s %s=\"%.2f\"" % (sSFX, strippedName, currentValue)
                     else:
-                        sSFX = "%s %s=\"%s\""%(sSFX,strippedName,currentValue)
+                        sSFX = "%s %s=\"%s\"" % (sSFX, strippedName, currentValue)
             elif AProperty.strip().upper().startswith("PARTICLE_"):
-                #These items pertain to the particles (starting with particle_)
+                # These items pertain to the particles (starting with particle_)
                 strippedName = AProperty.strip()[len("PARTICLE_"):]
-                sParticle = "%s %s=\"%s\""%(sParticle,strippedName,currentValue)   
+                sParticle = "%s %s=\"%s\"" % (sParticle, strippedName, currentValue)
             elif AProperty.strip().upper().startswith("ZIPPER_"):
-                #These items pertain to the zippers (starting with zipper_)
+                # These items pertain to the zippers (starting with zipper_)
                 strippedName = AProperty.strip()[len("ZIPPER_"):]
-                
-                sZipper = "%s %s=\"%s\""%(sZipper,strippedName.replace('_', '-'),currentValue)   
+
+                sZipper = "%s %s=\"%s\"" % (sZipper, strippedName.replace('_', '-'), currentValue)
             else:
-                #These items are standard items
-                prop = AProperty.strip()#.lower()
-                
+                # These items are standard items
+                prop = AProperty.strip()    # .lower()
+
                 if prop in lMaterialProperties.keys():
-                    
+
                     # if this property is conditional on another
                     cond = lMaterialProperties[prop]['parent']
-                    
+
                     conditionPassed = False
                     if cond is None:
                         conditionPassed = True
@@ -202,39 +352,40 @@ def writeMaterialsFile(sPath):
                             conditionPassed = True
                     elif cond in i and i[cond] == "true":
                         conditionPassed = True
-                        
-                    
+
                     if currentValue != lMaterialProperties[prop]['default'] and conditionPassed:
                         if isinstance(currentValue, float):
                             # In blender, proeprties use '_', but STK still expects '-'
-                            sImage = "%s %s=\"%.2f\""%(sImage,AProperty.replace("_","-"),currentValue)
+                            sImage = "%s %s=\"%.2f\"" % (sImage, AProperty.replace("_", "-"), currentValue)
                         else:
                             # In blender, proeprties use '_', but STK still expects '-'
-                            sImage = "%s %s=\"%s\""%(sImage,AProperty.replace("_","-"),(currentValue+'').strip())
+                            sImage = "%s %s=\"%s\"" % (sImage, AProperty.replace("_", "-"),
+                                                       (currentValue + '').strip())
 
         # Now write the main content of the materials.xml file
         if sImage or hasSoundeffect or hasParticle or hasZipper:
-            #Get the filename of the image.
+            # Get the filename of the image.
             s = i.filepath
-            sImage="  <material name=\"%s\"%s" % (bpy.path.basename(s),sImage)                
+            sImage = "  <material name=\"%s\"%s" % (bpy.path.basename(s), sImage)
             if hasSoundeffect:
-                sImage="%s>\n    <sfx%s/" % (sImage,sSFX)
+                sImage = "%s>\n    <sfx%s/" % (sImage, sSFX)
             if hasParticle:
-                sImage="%s>\n    <particles%s/" % (sImage,sParticle)
+                sImage = "%s>\n    <particles%s/" % (sImage, sParticle)
             if hasZipper:
-                sImage="%s>\n    <zipper%s/" % (sImage,sZipper)
+                sImage = "%s>\n    <zipper%s/" % (sImage, sZipper)
             if not hasSoundeffect and not hasParticle and not hasZipper:
-                sImage="%s/>\n" % (sImage)
+                sImage = "%s/>\n" % (sImage)
             else:
-                sImage="%s>\n  </material>\n" % (sImage)
-      
+                sImage = "%s>\n  </material>\n" % (sImage)
+
             f.write(sImage)
-        
+
     f.write("</materials>\n")
 
     f.close()
-    #print bsys.time()-start_time,"seconds"
+    # print bsys.time()-start_time,"seconds"
     # ----------------------------------------------------------------------
+
 
 class STK_Material_Export_Operator(bpy.types.Operator):
     bl_idname = ("screen.stk_material_exporter")
@@ -245,6 +396,6 @@ class STK_Material_Export_Operator(bpy.types.Operator):
         writeMaterialsFile(self.filepath)
         return {'FINISHED'}
 
+
 def register():
     bpy.utils.register_module(__name__)
-    

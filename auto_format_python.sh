@@ -7,4 +7,5 @@
 # pep8 --statistics --filename *.py
 #
 
-yapf --in-place *.py addons/*/*.py
+yapf --in-place --parallel -vv *.py
+yapf --in-place --parallel -vv -r addons/

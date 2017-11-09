@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Name: 'SPM Exporter (.spm)...'
+Name: 'SPM format (.spm)...'
 Blender: 270
-Group: 'Export'
-Tooltip: 'Export to space partitioned mesh file format (.spm)'
+Group: 'Export-Import'
+Tooltip: 'Export/ to space partitioned mesh file format (.spm)'
 """
 
 __version__ = "1.0"
@@ -37,15 +37,18 @@ __bpydoc__ = """\
 
 import bpy
 import os
+from bpy_extras.io_utils import ImportHelper, ExportHelper
+
 from . import spm_export
+from . import spm_import
 
 bl_info = {
-    "name": "SPM (Space partitioned mesh) Model Exporter",
-    "description": "Exports a blender scene or object to the SPM format",
+    "name": "SPM (Space partitioned mesh) Model ExporterImporter",
+    "description": "Exports and imports a blender scene or object to/from the SPM format",
     "version": (1, 0),
     "blender": (2, 7, 0),
     "api": 31236,
-    "location": "File > Export",
+    "location": "File > Import-Export",
     "category": "Import-Export"
 }
 
@@ -68,10 +71,30 @@ class SPM_Confirm_Operator(bpy.types.Operator):
         return spm_export.save(self.file_path, context, self.export_settings)
 
 
-# ==== EXPORT OPERATOR ====
+class SPM_Import_Operator(bpy.types.Operator, ImportHelper):
+    """ Import SPM operator """
+
+    bl_idname = ("screen.spm_import")
+    bl_label = ("SPM Import")
+    filename_ext = ".spm"
+    filter_glob = bpy.props.StringProperty(default="*.spm", options={'HIDDEN'})
+    extra_tex_path = bpy.props.StringProperty(name="Texture path(s)", \
+                                              description="Extra directory for textures, seperate by ;;")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "extra_tex_path")
+
+    def execute(self, context):
+        keywords = self.as_keywords(ignore=("filter_glob", ))
+        spm_import.load(context, **keywords)
+        context.scene.update()
+        return {"FINISHED"}
 
 
 class SPM_Export_Operator(bpy.types.Operator):
+    """ Export SPM operator """
+
     bl_idname = ("screen.spm_export")
     bl_label = ("SPM Export")
 
@@ -135,19 +158,26 @@ class SPM_Export_Operator(bpy.types.Operator):
         return spm_export.save(self.filepath, context, export_settings, obj_list)
 
 
+def menu_func_import(self, context):
+    """ Add to import menu """
+    self.layout.operator(SPM_Import_Operator.bl_idname, text="SPM (.spm)")
+
+
 def menu_func_export(self, context):
-    """ Add to menu """
+    """ Add to export menu """
     self.layout.operator(SPM_Export_Operator.bl_idname, text="SPM (.spm)")
 
 
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.INFO_MT_file_import.append(menu_func_import)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.INFO_MT_file_import.remove(menu_func_import)
 
 
 if __name__ == "__main__":

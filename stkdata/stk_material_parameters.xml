@@ -81,14 +81,11 @@
                                 doc="Define list of hue for colorization, from 0.0 to (or equal) 1 (0.0 means original color), separated by spaces, STK will randomly pick one hue for colorization, no need to define for karts."/>
                 </BoolProp>
             </EnumChoice>
-            
-            <!-- Water -->
-            <!-- <EnumChoice id="water_shader" label="Water Shader"
+
+            <EnumChoice id="displace" label="Displace Shader"
                         doc="A shader to simulate light reflexions and moving waves on this surface">
-                <FloatProp id="water_shader_speed_1" name="Main wave speed"      default="6.6667" min="0.0"/>
-                <FloatProp id="water_shader_speed_2" name="Secondary wave speed" default="4.0"    min="0.0"/>
-            </EnumChoice> -->
-            
+            </EnumChoice>
+
             <!-- Sphere map -->
             <EnumChoice id="spheremap" label="Reflection (Sphere mapping)"/>
             

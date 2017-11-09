@@ -156,7 +156,7 @@ def writeSPMFile(filename, objects=[]):
         if arm != None and not arm in arm_dict:
             animated_buf = bytearray()
             animated_buf += writeString(arm.data.name)
-            animated_buf += writeInt(static_mesh_frame)
+            animated_buf += writeInt(0 if static_mesh_frame is 0 else static_mesh_frame - 1)
             animated_buf += writeInt(len(arm.data.bones))
 
             for group in arm.data.bones:
@@ -304,7 +304,11 @@ def writeSPMFile(filename, objects=[]):
     script_file = os.path.realpath(__file__)
     cmd_bin = os.path.dirname(script_file)
     cmd_bin = cmd_bin + "/make_spm"
-    cmd_text = [cmd_bin] + [filename] + ["do-sp" if spm_parameters.get("do-sp") else "none"] + [str(arm_count)]
+    cmd_text = [cmd_bin] + [filename] + \
+    ["do-sp" if spm_parameters.get("do-sp") else "none"] + \
+    [str(arm_count)] + ["en" if spm_parameters.get("export-normal") else "no"] + \
+    ["ev" if spm_parameters.get("export-vcolor") else "no"] + \
+    ["et" if spm_parameters.get("export-tangent") else "no"]
     call(cmd_text)
 
     end = time.time()
@@ -337,6 +341,9 @@ class SPM_Export_Operator(bpy.types.Operator):
     do_sp = bpy.props.BoolProperty(name="Do mesh splitting (for space partitioning)", default = False)
     overwrite_without_asking = bpy.props.BoolProperty(name="Overwrite without asking", default = False)
     keyframes_only = bpy.props.BoolProperty(name="Export keyframes only for animated mesh", default = True)
+    export_normal = bpy.props.BoolProperty(name="Export normal in mesh", default = True)
+    export_vcolor = bpy.props.BoolProperty(name="Export vertex color in mesh", default = True)
+    export_tangent = bpy.props.BoolProperty(name="Calculate tangent and bitangents for mesh", default = True)
     static_mesh_frame = bpy.props.IntProperty(name="Frame for static mesh usage", default = -1)
 
     def invoke(self, context, event):
@@ -358,6 +365,9 @@ class SPM_Export_Operator(bpy.types.Operator):
         spm_parameters["local-space"    ] = self.localsp
         spm_parameters["apply-modifiers"] = self.applymodifiers
         spm_parameters["keyframes-only"] = self.keyframes_only
+        spm_parameters["export-normal"] = self.export_normal
+        spm_parameters["export-vcolor"] = self.export_vcolor
+        spm_parameters["export-tangent"] = self.export_tangent
         spm_parameters["static-mesh-frame"] = self.static_mesh_frame
         spm_parameters["do-sp"] = self.do_sp
         the_scene = context.scene
@@ -403,4 +413,4 @@ def unregister():
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":
-    register
+    register()

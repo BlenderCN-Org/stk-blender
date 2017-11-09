@@ -1,6 +1,7 @@
 #include <aabbox3d.h>
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <cassert>
 #include <cmath>
 #include <cstring>
@@ -23,6 +24,8 @@
 #include <vector2d.h>
 #include <vector3d.h>
 #include <SColor.h>
+
+const uint8_t VERSION = 1;
 
 using namespace irr;
 
@@ -428,6 +431,34 @@ struct InArm
         LocRotScale> > > > m_poses;
 };
 
+void writeBBox(std::ofstream& mesh, const core::aabbox3df& box)
+{
+    float box_array[6] = { box.MinEdge.X, box.MinEdge.Y, box.MinEdge.Z,
+        box.MaxEdge.X, box.MaxEdge.Y, box.MaxEdge.Z };
+    mesh.write((char*)box_array, 24);
+}
+
+void writeHeader(std::ofstream& mesh, const std::string& header,
+                 bool export_normal, bool export_vcolor,
+                 bool export_tangent)
+{
+    std::string real_header = "SP";
+    mesh << real_header;
+    // 5 bit version, 3 bit type : SPMS SPMA SPMN
+    uint8_t byte = VERSION;
+    byte <<= 3;
+    const uint8_t type_num = header == "SPMS" ? 0 : header == "SPMA" ? 1 : 2;
+    byte |= type_num;
+    mesh.write((char*)&byte, 1);
+    std::bitset<8> misc_data;
+    misc_data.reset();
+    misc_data.set(0, export_normal);
+    misc_data.set(1, export_vcolor);
+    misc_data.set(2, export_tangent);
+    byte = static_cast<uint8_t>(misc_data.to_ulong());
+    mesh.write((char*)&byte, 1);
+}
+
 void writeArmData(std::ofstream& mesh, std::vector<InArm>& in_arms)
 {
     uint8_t arm_size = (uint8_t)in_arms.size();
@@ -532,6 +563,7 @@ void writeArmData(std::ofstream& mesh, std::vector<InArm>& in_arms)
         }
     }
 }
+
 void calculateTangents(
     core::vector3df& normal,
     core::vector3df& tangent,
@@ -570,11 +602,15 @@ void calculateTangents(
 
 int main(int argc, char* argv[])
 {
-    if (argc != 4)
+    if (argc != 7)
     {
-        printf("Required 3 arguments.\n");
+        printf("Required 6 arguments.\n");
         return 0;
     }
+
+    bool export_normal = strcmp(argv[4], "en") == 0;
+    bool export_vcolor = strcmp(argv[5], "ev") == 0;
+    bool export_tangent = strcmp(argv[6], "et") == 0;
 
     std::vector<BlenderExportData> bed;
     std::string mesh_data = argv[1];
@@ -861,135 +897,138 @@ int main(int argc, char* argv[])
     std::unordered_map<SPMVertex, uint32_t, Hasher> vert_map;
     std::vector<SPMVertex> vert;
     std::vector<uint32_t> idx;
-    // STK tangent calculation
-    if (1)
+    if (export_tangent)
     {
-        for (auto& tri : tris)
+        // STK tangent calculation
+        if (1)
         {
-            for (unsigned int i = 0; i < 3; i++)
+            for (auto& tri : tris)
             {
-                SPMVertex& v = tri[i];
-                auto it = vert_map.find(v);
-                if (it == vert_map.end())
+                for (unsigned int i = 0; i < 3; i++)
                 {
-                    unsigned vert_loc = vert.size();
-                    idx.push_back(vert_loc);
-                    vert.push_back(v);
-                    vert_map[v] = vert_loc;
+                    SPMVertex& v = tri[i];
+                    auto it = vert_map.find(v);
+                    if (it == vert_map.end())
+                    {
+                        unsigned vert_loc = vert.size();
+                        idx.push_back(vert_loc);
+                        vert.push_back(v);
+                        vert_map[v] = vert_loc;
+                    }
+                    else
+                    {
+                        idx.push_back(it->second);
+                    }
                 }
-                else
+            }
+            for (unsigned i = 0; i < idx.size(); i += 3)
+            {
+                core::vector3df local_normal, local_tangent, local_bitangent;
+                calculateTangents(local_normal, local_tangent, local_bitangent,
+                    (vert[idx[i + 0]]).m_position, (vert[idx[i + 1]]).m_position,
+                    (vert[idx[i + 2]]).m_position, (vert[idx[i + 0]]).m_uv_one,
+                    (vert[idx[i + 1]]).m_uv_one, (vert[idx[i + 2]]).m_uv_one);
+                (vert[idx[i + 0]]).m_tangent_cal.first = local_tangent;
+                (vert[idx[i + 0]]).m_bitangent_cal.first = local_bitangent;
+
+                calculateTangents(local_normal, local_tangent, local_bitangent,
+                    (vert[idx[i + 1]]).m_position, (vert[idx[i + 2]]).m_position,
+                    (vert[idx[i + 0]]).m_position, (vert[idx[i + 1]]).m_uv_one,
+                    (vert[idx[i + 2]]).m_uv_one, (vert[idx[i + 0]]).m_uv_one);
+                (vert[idx[i + 1]]).m_tangent_cal.first = local_tangent;
+                (vert[idx[i + 1]]).m_bitangent_cal.first = local_bitangent ;
+
+                calculateTangents(local_normal, local_tangent, local_bitangent,
+                    (vert[idx[i + 2]]).m_position, (vert[idx[i + 0]]).m_position,
+                    (vert[idx[i + 1]]).m_position, (vert[idx[i + 2]]).m_uv_one,
+                    (vert[idx[i + 0]]).m_uv_one, (vert[idx[i + 1]]).m_uv_one);
+                (vert[idx[i + 2]]).m_tangent_cal.first = local_tangent;
+                (vert[idx[i + 2]]).m_bitangent_cal.first = local_bitangent;
+            }
+            for (auto& tri : tris)
+            {
+                for (unsigned int i = 0; i < 3; i++)
                 {
-                    idx.push_back(it->second);
+                    SPMVertex& v = tri[i];
+                    auto it = vert_map.find(v);
+                    assert(it != vert_map.end());
+                    assert(tri[i].m_position == (vert[it->second]).m_position);
+                    tri[i].m_tangent = (vert[it->second]).m_tangent_cal.first;
+                    tri[i].m_bitangent = (vert[it->second]).m_bitangent_cal.first;
                 }
             }
         }
-        for (unsigned i = 0; i < idx.size(); i += 3)
+        else
         {
-            core::vector3df local_normal, local_tangent, local_bitangent;
-            calculateTangents(local_normal, local_tangent, local_bitangent,
-                (vert[idx[i + 0]]).m_position, (vert[idx[i + 1]]).m_position,
-                (vert[idx[i + 2]]).m_position, (vert[idx[i + 0]]).m_uv_one,
-                (vert[idx[i + 1]]).m_uv_one, (vert[idx[i + 2]]).m_uv_one);
-            (vert[idx[i + 0]]).m_tangent_cal.first = local_tangent;
-            (vert[idx[i + 0]]).m_bitangent_cal.first = local_bitangent;
-    
-            calculateTangents(local_normal, local_tangent, local_bitangent,
-                (vert[idx[i + 1]]).m_position, (vert[idx[i + 2]]).m_position,
-                (vert[idx[i + 0]]).m_position, (vert[idx[i + 1]]).m_uv_one,
-                (vert[idx[i + 2]]).m_uv_one, (vert[idx[i + 0]]).m_uv_one);
-            (vert[idx[i + 1]]).m_tangent_cal.first = local_tangent;
-            (vert[idx[i + 1]]).m_bitangent_cal.first = local_bitangent ;
-    
-            calculateTangents(local_normal, local_tangent, local_bitangent,
-                (vert[idx[i + 2]]).m_position, (vert[idx[i + 0]]).m_position,
-                (vert[idx[i + 1]]).m_position, (vert[idx[i + 2]]).m_uv_one,
-                (vert[idx[i + 0]]).m_uv_one, (vert[idx[i + 1]]).m_uv_one);
-            (vert[idx[i + 2]]).m_tangent_cal.first = local_tangent;
-            (vert[idx[i + 2]]).m_bitangent_cal.first = local_bitangent;
-        }
-        for (auto& tri : tris)
-        {
-            for (unsigned int i = 0; i < 3; i++)
+            // Calculate smooth tangents and bitangents
+            for (unsigned int i = 0; i < tris.size(); i++)
             {
-                SPMVertex& v = tri[i];
-                auto it = vert_map.find(v);
-                assert(it != vert_map.end());
-                assert(tri[i].m_position == (vert[it->second]).m_position);
-                tri[i].m_tangent = (vert[it->second]).m_tangent_cal.first;
-                tri[i].m_bitangent = (vert[it->second]).m_bitangent_cal.first;
+                const core::vector3df& v0 = tris[i][0].m_position;
+                const core::vector3df& v1 = tris[i][1].m_position;
+                const core::vector3df& v2 = tris[i][2].m_position;
+                const core::vector2df& uv0 = tris[i][0].m_uv_one;
+                const core::vector2df& uv1 = tris[i][1].m_uv_one;
+                const core::vector2df& uv2 = tris[i][2].m_uv_one;
+                core::vector3df delta_position_one = v1 - v0;
+                core::vector3df delta_position_two = v2 - v0;
+                core::vector2df delta_uv_one = uv1 - uv0;
+                core::vector2df delta_uv_two = uv2 - uv0;
+                float den = (delta_uv_one.X * delta_uv_two.Y - delta_uv_one.Y *
+                    delta_uv_two.X);
+                if (den == 0.0f)
+                    den = 0.000001f;
+                float r = 1.0f / den;
+                core::vector3df m_tangent_cal = ((delta_position_two * delta_uv_one.X -
+                    delta_position_one * delta_uv_two.X) * r).normalize();
+                core::vector3df m_bitangent_cal = ((delta_position_one * delta_uv_two.Y -
+                    delta_position_two * delta_uv_one.Y) * r).normalize();
+                tris[i][0].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
+                tris[i][1].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
+                tris[i][2].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
+                tris[i][0].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
+                tris[i][1].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
+                tris[i][2].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
             }
-        }
-    }
-    else
-    {
-        // Calculate smooth tangents and bitangents
-        for (unsigned int i = 0; i < tris.size(); i++)
-        {
-            const core::vector3df& v0 = tris[i][0].m_position;
-            const core::vector3df& v1 = tris[i][1].m_position;
-            const core::vector3df& v2 = tris[i][2].m_position;
-            const core::vector2df& uv0 = tris[i][0].m_uv_one;
-            const core::vector2df& uv1 = tris[i][1].m_uv_one;
-            const core::vector2df& uv2 = tris[i][2].m_uv_one;
-            core::vector3df delta_position_one = v1 - v0;
-            core::vector3df delta_position_two = v2 - v0;
-            core::vector2df delta_uv_one = uv1 - uv0;
-            core::vector2df delta_uv_two = uv2 - uv0;
-            float den = (delta_uv_one.X * delta_uv_two.Y - delta_uv_one.Y *
-                delta_uv_two.X);
-            if (den == 0.0f)
-                den = 0.000001f;
-            float r = 1.0f / den;
-            core::vector3df m_tangent_cal = ((delta_position_two * delta_uv_one.X -
-                delta_position_one * delta_uv_two.X) * r).normalize();
-            core::vector3df m_bitangent_cal = ((delta_position_one * delta_uv_two.Y -
-                delta_position_two * delta_uv_one.Y) * r).normalize();
-            tris[i][0].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
-            tris[i][1].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
-            tris[i][2].m_tangent_cal = std::make_pair(m_tangent_cal, 1);
-            tris[i][0].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
-            tris[i][1].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
-            tris[i][2].m_bitangent_cal = std::make_pair(m_bitangent_cal, 1);
-        }
-        std::unordered_set<SPMVertex, Hasher> univert;
-        for (auto& tri : tris)
-        {
-            for (unsigned i = 0; i < 3; i++)
+            std::unordered_set<SPMVertex, Hasher> univert;
+            for (auto& tri : tris)
             {
-                const SPMVertex& v = tri[i];
-                auto it = univert.find(v);
-                if (it == univert.end())
+                for (unsigned i = 0; i < 3; i++)
                 {
-                    univert.insert(v);
-                }
-                else
-                {
-                    it->m_tangent_cal = std::make_pair(v.m_tangent_cal.first +
-                        it->m_tangent_cal.first, v.m_tangent_cal.second + it->m_tangent_cal.second);
-                    it->m_bitangent_cal = std::make_pair(v.m_bitangent_cal.first +
-                        it->m_bitangent_cal.first, v.m_bitangent_cal.second +
-                        it->m_bitangent_cal.second);
+                    const SPMVertex& v = tri[i];
+                    auto it = univert.find(v);
+                    if (it == univert.end())
+                    {
+                        univert.insert(v);
+                    }
+                    else
+                    {
+                        it->m_tangent_cal = std::make_pair(v.m_tangent_cal.first +
+                            it->m_tangent_cal.first, v.m_tangent_cal.second + it->m_tangent_cal.second);
+                        it->m_bitangent_cal = std::make_pair(v.m_bitangent_cal.first +
+                            it->m_bitangent_cal.first, v.m_bitangent_cal.second +
+                            it->m_bitangent_cal.second);
+                    }
                 }
             }
-        }
-    
-        for (auto& tri : tris)
-        {
-            for (unsigned i = 0; i < 3; i++)
+
+            for (auto& tri : tris)
             {
-                const SPMVertex& v = tri[i];
-                auto it = univert.find(v);
-                assert(it != univert.end());
-                if (it->m_tangent_cal.second != -1)
+                for (unsigned i = 0; i < 3; i++)
                 {
-                    it->m_tangent_cal = std::make_pair
-                        ((it->m_tangent_cal.first / it->m_tangent_cal.second).normalize(), -1);
-                    it->m_bitangent_cal = std::make_pair
-                        ((it->m_bitangent_cal.first / it->m_bitangent_cal.second).normalize(),
-                        -1);
+                    const SPMVertex& v = tri[i];
+                    auto it = univert.find(v);
+                    assert(it != univert.end());
+                    if (it->m_tangent_cal.second != -1)
+                    {
+                        it->m_tangent_cal = std::make_pair
+                            ((it->m_tangent_cal.first / it->m_tangent_cal.second).normalize(), -1);
+                        it->m_bitangent_cal = std::make_pair
+                            ((it->m_bitangent_cal.first / it->m_bitangent_cal.second).normalize(),
+                            -1);
+                    }
+                    tri[i].m_tangent = it->m_tangent_cal.first;
+                    tri[i].m_bitangent = it->m_bitangent_cal.first;
                 }
-                tri[i].m_tangent = it->m_tangent_cal.first;
-                tri[i].m_bitangent = it->m_bitangent_cal.first;
             }
         }
     }
@@ -1006,8 +1045,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    mesh << header;
-    mesh.write((char*)&aabb.MinEdge.X, 24);
+    writeHeader(mesh, header, export_normal, export_vcolor, export_tangent);
+    writeBBox(mesh, aabb);
 
     std::unordered_map<std::string, std::tuple<unsigned, std::string,
         std::string> > tex_map;
@@ -1032,8 +1071,7 @@ int main(int argc, char* argv[])
     }
 
     const size_t total_tris = tris.size();
-    std::vector<std::tuple<std::vector<Triangle>, core::aabbox3df,
-        core::aabbox3df> > sectors;
+    std::vector<std::pair<std::vector<Triangle>, core::aabbox3df> > sectors;
     if (header == "SPMS")
     {
         std::vector<Triangle> cur_sector;
@@ -1048,8 +1086,6 @@ int main(int argc, char* argv[])
                     core::aabbox3df cmp_box =
                         core::aabbox3df(x - sec_size, y - sec_size, z - sec_size,
                         x, y, z);
-                    core::aabbox3df this_bbox(0, 0, 0, 0, 0, 0);
-                    bool loaded_bbox = false;
                     auto partition = std::partition(tris.begin(), tris.end(),
                         [&cmp_box](const Triangle& t)->bool
                         {
@@ -1064,50 +1100,28 @@ int main(int argc, char* argv[])
                     for (unsigned i = 0; i < pred_num; i++)
                     {
                         const Triangle& t = tris[i];
-                        const core::aabbox3df cur_bbox(
-                            std::min({t[0].m_position.X, t[1].m_position.X,
-                            t[2].m_position.X}),
-                            std::min({t[0].m_position.Y, t[1].m_position.Y,
-                            t[2].m_position.Y}),
-                            std::min({t[0].m_position.Z, t[1].m_position.Z,
-                            t[2].m_position.Z}),
-                            std::max({t[0].m_position.X, t[1].m_position.X,
-                            t[2].m_position.X}),
-                            std::max({t[0].m_position.Y, t[1].m_position.Y,
-                            t[2].m_position.Y}),
-                            std::max({t[0].m_position.Z, t[1].m_position.Z,
-                            t[2].m_position.Z}));
-                         if (!loaded_bbox)
-                         {
-                             loaded_bbox = true;
-                             this_bbox = cur_bbox;
-                         }
-                         else
-                         {
-                             this_bbox.addInternalBox(cur_bbox);
-                         }
                         cur_sector.push_back(t);
                         tris[i].m_partitioned = true;
                     }
-                    sectors.emplace_back(std::move(cur_sector), cmp_box, this_bbox);
+                    sectors.emplace_back(std::move(cur_sector), cmp_box);
                     assert(cur_sector.empty());
                 }
             }
         }
-    
+
         tris.erase(std::remove_if(tris.begin(), tris.end(),
             [](const Triangle& t)->bool
             {
                 return t.m_partitioned;
             }), tris.end());
-    
+
         int overlap_limit = 0;
         float each_overlap = 1.0f;
         bool end = false;
         while (!end)
         {
             overlap_limit += each_overlap;
-            if (overlap_limit > 10)
+            if (overlap_limit > 20)
             {
                 end = true;
             }
@@ -1115,82 +1129,66 @@ int main(int argc, char* argv[])
             {
                 if (!end)
                 {
-                    std::get<1>(p).addInternalPoint(std::get<1>(p).MaxEdge +
+                    p.second.addInternalPoint(p.second.MaxEdge +
                         core::vector3df(each_overlap));
-                    std::get<1>(p).addInternalPoint(std::get<1>(p).MinEdge -
+                    p.second.addInternalPoint(p.second.MinEdge -
                         core::vector3df(each_overlap));
                 }
-                if (std::get<0>(p).empty())
+                if (p.first.empty())
                 {
                     continue;
                 }
                 for (unsigned i = 0; i < tris.size(); i++)
                 {
-                    if (tris[i].m_partitioned ||
-                        (end && tris[i].getArea() > (sec_size * sec_size * 0.5f)))
+                    if (tris[i].m_partitioned)
                     {
                         continue;
                     }
-                    if (end)
+                    if (tris[i].insideBox(p.second))
                     {
-                        if (tris[i].insideBoxOnePoint(std::get<1>(p)))
-                        {
-                            tris[i].m_partitioned = true;
-                            std::get<0>(p).push_back(tris[i]);
-                            std::get<1>(p).addInternalPoint(tris[i].m_v[0].m_position);
-                            std::get<1>(p).addInternalPoint(tris[i].m_v[1].m_position);
-                            std::get<1>(p).addInternalPoint(tris[i].m_v[2].m_position);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[0].m_position);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[1].m_position);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[2].m_position);
-                        }
-                    }
-                    else
-                    {
-                        if (tris[i].insideBox(std::get<1>(p)))
-                        {
-                            tris[i].m_partitioned = true;
-                            std::get<0>(p).push_back(tris[i]);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[0].m_position);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[1].m_position);
-                            std::get<2>(p).addInternalPoint(tris[i].m_v[2].m_position);
-                        }
+                        tris[i].m_partitioned = true;
+                        p.first.push_back(tris[i]);
                     }
                 }
             }
         }
-    
+
         tris.erase(std::remove_if(tris.begin(), tris.end(),
             [](const Triangle& t)->bool
             {
                 return t.m_partitioned;
             }), tris.end());
-    
+
         if (tris.size() > 0)
         {
             printf("%lu triangle(s) too large to fit in any sector.\n",
                 tris.size());
         }
         sectors.emplace(sectors.begin(), std::move(tris),
-            core::aabbox3df(0, 0, 0, 0, 0, 0), core::aabbox3df(0, 0, 0, 0, 0, 0));
-    
+            core::aabbox3df(0, 0, 0, 0, 0, 0));
+
         size_t partitioned_tris = std::accumulate(sectors.begin(), sectors.end(),
-            0, [](size_t current_sum, const std::tuple<std::vector<Triangle>,
-            core::aabbox3df, core::aabbox3df>& p)
+            0, [](size_t current_sum, const std::pair<std::vector<Triangle>,
+            core::aabbox3df>& p)
             {
-                return current_sum + std::get<0>(p).size();
+                return current_sum + p.first.size();
             });
         assert(partitioned_tris == total_tris);
     }
     else
     {
-        sectors.emplace_back(std::move(tris), aabb, aabb);
+        // For mesh without SP, just emplace all triangles
+        sectors.emplace_back(std::move(tris), aabb);
     }
 
     if (sectors.size() > 65535)
     {
         printf("More than 65535 sectors.\n");
         return 1;
+    }
+    else
+    {
+        printf("%lu sectors.\n", sectors.size());
     }
 
     uint16_t size_num = tex_map.size();
@@ -1223,15 +1221,15 @@ int main(int argc, char* argv[])
     for (unsigned sec_num = 0; sec_num < sectors.size(); sec_num++)
     {
         auto& s = sectors[sec_num];
-        if (std::get<0>(s).empty())
+        if (s.first.empty())
         {
+            assert(header == "SPMS");
             size_num = 0;
             mesh.write((char*)&size_num, 2);
-            mesh.write((char*)&std::get<1>(s).MinEdge.X, 24);
-            mesh.write((char*)&std::get<2>(s).MinEdge.X, 24);
+            writeBBox(mesh, s.second);
             continue;
         }
-        std::sort(std::get<0>(s).begin(), std::get<0>(s).end(),
+        std::sort(s.first.begin(), s.first.end(),
             [](const Triangle& tri_a, const Triangle& tri_b)->bool
             {
                 return tri_a.m_name_cmp < tri_b.m_name_cmp;
@@ -1240,7 +1238,7 @@ int main(int argc, char* argv[])
         std::vector<std::tuple<unsigned, unsigned,
             bool/*uv_1?*/, bool/*uv_2?*/> > offsets;
         unsigned start = 0;
-        for (auto it = std::get<0>(s).begin(); it != std::get<0>(s).end(); it++)
+        for (auto it = s.first.begin(); it != s.first.end(); it++)
         {
             if (cur_tex != it->m_name_cmp)
             {
@@ -1260,13 +1258,13 @@ int main(int argc, char* argv[])
             vert.clear();
             idx.clear();
             unsigned start = std::get<0>(offsets[offset]);
-            unsigned end = offset + 1 == offsets.size() ? std::get<0>(s).size() :
+            unsigned end = offset + 1 == offsets.size() ? s.first.size() :
                 std::get<0>(offsets[offset + 1]);
             for (; start < end; start++)
             {
                 for (unsigned int i = 0; i < 3; i++)
                 {
-                    const SPMVertex& v = std::get<0>(s)[start][i];
+                    const SPMVertex& v = s.first[start][i];
                     auto it = vert_map.find(v);
                     if (it == vert_map.end())
                     {
@@ -1293,24 +1291,30 @@ int main(int argc, char* argv[])
                 mesh.write((char*)float_array, 12);
                 uint32_t nor;
                 uint16_t half_float;
-                vert[i].m_normal.getAs4Values(float_array);
-                mdm_normalNativeTo10_10_10_2(&nor, float_array);
-                mesh.write((char*)&nor, 4);
-                if (vert[i].m_color == video::SColor(255, 255, 255, 255))
+                if (export_normal)
                 {
-                    uint8_t tmp = 128;
-                    mesh.write((char*)&tmp, 1);
+                    vert[i].m_normal.getAs4Values(float_array);
+                    mdm_normalNativeTo10_10_10_2(&nor, float_array);
+                    mesh.write((char*)&nor, 4);
                 }
-                else
+                if (export_vcolor)
                 {
-                    uint8_t tmp = 255;
-                    mesh.write((char*)&tmp, 1);
-                    tmp = vert[i].m_color.getRed();
-                    mesh.write((char*)&tmp, 1);
-                    tmp = vert[i].m_color.getGreen();
-                    mesh.write((char*)&tmp, 1);
-                    tmp = vert[i].m_color.getBlue();
-                    mesh.write((char*)&tmp, 1);
+                    if (vert[i].m_color == video::SColor(255, 255, 255, 255))
+                    {
+                        uint8_t tmp = 128;
+                        mesh.write((char*)&tmp, 1);
+                    }
+                    else
+                    {
+                        uint8_t tmp = 255;
+                        mesh.write((char*)&tmp, 1);
+                        tmp = vert[i].m_color.getRed();
+                        mesh.write((char*)&tmp, 1);
+                        tmp = vert[i].m_color.getGreen();
+                        mesh.write((char*)&tmp, 1);
+                        tmp = vert[i].m_color.getBlue();
+                        mesh.write((char*)&tmp, 1);
+                    }
                 }
                 const bool has_uv_1 = std::get<2>(offsets[offset]);
                 const bool has_uv_2 = std::get<3>(offsets[offset]);
@@ -1327,12 +1331,15 @@ int main(int argc, char* argv[])
                         toHalfFloat(&half_float, vert[i].m_uv_two.Y);
                         mesh.write((char*)&half_float, 2);
                     }
-                    vert[i].m_tangent.getAs4Values(float_array);
-                    mdm_normalNativeTo10_10_10_2(&nor, float_array);
-                    mesh.write((char*)&nor, 4);
-                    vert[i].m_bitangent.getAs4Values(float_array);
-                    mdm_normalNativeTo10_10_10_2(&nor, float_array);
-                    mesh.write((char*)&nor, 4);
+                    if (export_tangent)
+                    {
+                        vert[i].m_tangent.getAs4Values(float_array);
+                        mdm_normalNativeTo10_10_10_2(&nor, float_array);
+                        mesh.write((char*)&nor, 4);
+                        vert[i].m_bitangent.getAs4Values(float_array);
+                        mdm_normalNativeTo10_10_10_2(&nor, float_array);
+                        mesh.write((char*)&nor, 4);
+                    }
                 }
                 if (header == "SPMA")
                 {
@@ -1355,13 +1362,18 @@ int main(int argc, char* argv[])
         }
         if (header == "SPMS")
         {
-            mesh.write((char*)&std::get<1>(s).MinEdge.X, 24);
-            mesh.write((char*)&std::get<2>(s).MinEdge.X, 24);
+            writeBBox(mesh, s.second);
         }
     }
     if (header == "SPMA")
     {
         writeArmData(mesh, in_arms);
+    }
+    else if (header == "SPMS")
+    {
+        // Reserved for pre-computed visible sectors
+        uint16_t pre_computed_size = 0;
+        mesh.write((char*)&pre_computed_size, 2);
     }
     return 0;
 }

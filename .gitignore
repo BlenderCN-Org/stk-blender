@@ -1,6 +1,11 @@
 # Pycharm
 .idea/
 
+# Test stuff
+IGNORE/
+io_scene_gltf2/
+io_scene_fbx/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

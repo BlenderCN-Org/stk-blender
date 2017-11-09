@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0"?>
-<Properties>
+<Properties
+    bl-label="SuperTuxKart Object Properties"
+>
 
     <BoolProp id="enable_anim_texture" name="Use animated Texture" default="false" doc="Make a texture on this object move">
         <StringProp id="anim_texture" name="Texture to animate" default="" doc="Filename of the texture to animate"/>
@@ -321,7 +323,7 @@
             -->
             <BoolProp id="forcedbloom" name="Glow (bloom) (STK 0.8.2)" default="false" doc="Enable a bloom effect on this particular object, making it glow"/>
             <ColorProp id="outline" name="Glow (outline) (STK 0.8.2)" default="" doc="Enable a glowing outline on this particular object"/>
-            <BoolProp id="displacing" name="Refraction/reflection (STK 0.8.2)" default="false" doc="Enable an aquarium type effect on this material, appropriate for glasses behind which there is water"/>
+            <BoolProp id="displacing" name="Refraction/reflection (STK 0.8.2)" default="false" doc="Enable an aquarium type effect on this material, appropriate for glasses behind which there is water. The mesh with this effect will itself be invisible and be used to mark the boundaries of the effect."/>
             <!--
             <BoolProp id="skyboxobject" name="Skybox object (STK 0.8.2)" default="false" doc="If enabled, object will be displayed enlarged as part of the skybox"/>
             -->
@@ -335,11 +337,12 @@
         <!-- ************* LIGHTS AND SUN ************* -->
         <EnumChoice id="__category__lights_spacer" label=""/>
         <EnumChoice id="__category__lights" label="Lights and sun"/>
-    
+
         <!-- Light -->
         <EnumChoice id="light" label="Light" doc="A dynamic light emitter (STK 0.8.2)">
+            <StringProp id="if" name="Visible if..." default="" doc="Make this light conditionally visible based on a scripting function returning bool"/>
         </EnumChoice>
-        
+
         <!-- Light shaft -->
         <EnumChoice id="lightshaft_emitter" label="Light shaft (god rays) emitter (STK 0.8.2)">
             <FloatProp id="lightshaft_opacity" name="Strength (opacity)" default="0.7"/>
@@ -451,6 +454,10 @@
         <EnumChoice id="action_trigger" label="Action trigger" doc="Make something happen when driving there (FOR INTERNAL USE ONLY AT THIS TIME)">
             <StringProp id="action" name="Action" default="" doc="Name of the action to trigger"/>
             <FloatProp id="trigger_distance" name="Trigger Distance" default="5.0" doc="Distance at which this action is triggered"/>
+            <FloatProp id="reenable_timeout" name="Re-enable Timeout" default="999999.9" doc="Timeout before this action is re-triggered
+ after first triggering, 0 to make it always re-triggerable, 999999.9 to make it only once."/>
+            <StringProp id="triggered_object" name="Trigger which object in a library node" default="" doc="Name of the object for being triggered if
+ this is used in a library node"/>
             <EnumProp id="trigger_type" name="Trigger type" default="point">
                 <EnumChoice id="point" label="Point"/>
                 <EnumChoice id="cylinder" label="Cylinder"/>
@@ -492,10 +499,14 @@
             <ObjRefProp id="activate" name="Activate" default=""
                         filter="lambda self, o : 'type' in o and o['type'] == 'check'"
                         doc="Which check structure to activate when crossing the lap line"/>
+            <FloatProp id="min_height_testing" name="Min height testing" default="-1.0" doc="Vertical height smaller this value will not be considered on-quad"/>
+            <FloatProp id="max_height_testing" name="Max height testing" default="5.0" doc="Vertical height larger this value will not be considered on-quad"/>
         </EnumChoice>
         <EnumChoice id="navmesh" label="Navmesh" doc="Navmesh (for battle arenas)" >
+            <FloatProp id="min_height_testing" name="Min height testing" default="-1.0" doc="Vertical height smaller this value will not be considered on-quad"/>
+            <FloatProp id="max_height_testing" name="Max height testing" default="5.0" doc="Vertical height larger this value will not be considered on-quad"/>
         </EnumChoice>
-        
+
         <!-- Goal -->
         <EnumChoice id="goal" label="Goal line (soccer mode)" doc="A point is scored when a soccer ball crosses this line" >
             <BoolProp id="first_goal" name="First goal" default="true" doc="Checked=first goal, unchecked=second goal"/>

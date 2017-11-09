@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<Properties>
+<Properties
+    bl-label="SuperTuxKart Image Properties"
+>
     <PropGroup id="propgroup_visual" name="Display">
         <!-- Shader -->
         <EnumProp id="shader" name="Shader" default="solid" doc="Select the shader that should be used to render this material">
@@ -22,6 +24,14 @@
                                 doc="Define list of hue for colorization, from 0.0 to (or equal) 1 (0.0 means original color), separated by spaces, STK will randomly pick one hue for colorization, no need to define for karts."/>
                 </BoolProp>
             </EnumChoice>
+
+            <!-- Generic PBR solid -->
+            <EnumChoice id="solid_pbr" label="Generic PBR (solid)">
+                <LabelProp id="solid_pbr_help" name="Experimental feature (use with caution)"/>
+                <StringProp id="combined_map" name="Metal/Rough/Emit map"  default=""/>
+                <StringProp id="normal_map" name="Normal map"  default="" doc="Use normal maps for this material"/>
+            </EnumChoice>
+
             
             <!-- Alpha testing -->
             <EnumChoice id="alphatest" label="Cutout transparency (alpha test)">
@@ -80,10 +90,6 @@
                     <StringProp id="hue_settings" name="Hue settings for colorization" default=""
                                 doc="Define list of hue for colorization, from 0.0 to (or equal) 1 (0.0 means original color), separated by spaces, STK will randomly pick one hue for colorization, no need to define for karts."/>
                 </BoolProp>
-            </EnumChoice>
-
-            <EnumChoice id="displace" label="Displace Shader"
-                        doc="A shader to simulate light reflexions and moving waves on this surface">
             </EnumChoice>
 
             <!-- Sphere map -->

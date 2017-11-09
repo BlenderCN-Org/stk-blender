@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0"?>
-<Properties>
+<Properties
+    bl-label="SuperTuxKart Scene Properties"
+>
 
 <BoolProp id="is_stk_node" name="Is a SuperTuxKart library node (WIP feature)" default="false" box="false" doc="Check this if this blender file is a SuperTuxKart library node">
     <StringProp id="name" name="Code (folder name)" default="myNewNode" doc="Name of the node"/>
@@ -138,10 +140,7 @@
         <EnumChoice id="large" label="Large"/>
         <EnumChoice id="small" label="Small"/>
     </EnumProp>  
-    
-    <StringProp id="hat_offset" name="Hat offset" default="0.0 0.1 0.0" doc="Where to place hat relative to bone named Head"/>
-    <BoolProp id="random_wheel_rot" name="Randomize wheel rotation" default="true" doc="Randomize the initial rotation of wheels to reduce the feeling that all wheels are identical"/>
-    
+
     <EnumProp id="karttype" name="Type" default="medium" doc="SuperTuxKart Kart Type">
         <EnumChoice id="light" label="Light" />
         <EnumChoice id="medium" label="Medium" />
@@ -149,7 +148,7 @@
     </EnumProp>
     
     <StringProp id="kartLean" name="Lean max (advanced)" default="" doc="Customize lean, for instance *0-10"/>
-    
+    <StringProp id="exhaust_xml" name="Exhaust particle file" default="kart_exhaust.xml" doc="Determine the emitting exhaust particle, empty to disable"/>
 </BoolProp>
 
 

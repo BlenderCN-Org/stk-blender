@@ -2,10 +2,10 @@
 
 Installation: https://supertuxkart.net/Installing_Tools#Blender
 
-Original repo files: https://sourceforge.net/p/supertuxkart/code/HEAD/tree/media/trunk/blender_25/
+Original repo files: https://sourceforge.net/p/supertuxkart/code/HEAD/tree/media/trunk/blender_26/
 
-SP (space partitioning) files:
+SPM reference files:
 - https://gist.github.com/Benau
-- https://github.com/Benau/stk-code/tree/sp/src/sp
+- https://github.com/supertuxkart/stk-code/blob/master/src/graphics/sp_mesh_loader.hpp
 
 

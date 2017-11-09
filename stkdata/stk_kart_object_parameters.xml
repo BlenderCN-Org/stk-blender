@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0"?>
-<Properties>
+<Properties
+    bl-label="-"
+>
 
     <!-- ******** STK Object Type ******** -->
     <EnumProp id="type" name="Type" default="none" doc="SuperTuxKart Object Type">
@@ -17,6 +19,9 @@
             <FloatProp id="speed-weighted-texture-speed-x" name="Texture speed X" default="0.0" doc="Texture speed X direction (0.0 for no animation on the X axis)" min="-1000.0" max="1000.0"/>
             <FloatProp id="speed-weighted-texture-speed-y" name="Texture speed Y" default="0.0" doc="Texture speed Y direction (0.0 for no animation on the Y axis)" min="-1000.0" max="1000.0"/>
         </EnumChoice>
-        <EnumChoice id="headlight" label="Headlight" doc="Headlights (visible only during day)" />
+        <EnumChoice id="headlight" label="Headlight" doc="Headlights (visible only during day)">
+            <ColorProp id="headlight_color" name="Headlight Color" default="255 255 255" doc="Click here to select the color of the headlight"/>
+        </EnumChoice>
+        <EnumChoice id="hat" label="Hat positioner" doc="Define the position of hat" />
     </EnumProp>
 </Properties>

@@ -100,13 +100,13 @@ class STK_MissingProps_Material(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# ------------------------------------------------------------------------------
-#! Utility function, creates all properties in a given object
-#!
-#! object   the object to create properties in
-#! props    a list of properties to create
 def createProperties(object, props):
-
+    """
+    Utility function, creates all properties in a given object
+    :param object: the object to create properties in
+    :param props: a list of properties to create
+    :return:
+    """
     if not "_RNA_UI" in object:
         object["_RNA_UI"] = {}
 
@@ -201,12 +201,11 @@ def generateOpName(prefix, fullid, id):
         return prefix + fullid + '_' + id
 
 
-# ------------------------------------------------------------------------------
-#! The base class for all properties.
-#! If you use this property directly (and not a subclass), you get a simple text box
-
-
 class StkProperty:
+    """
+    The base class for all properties.
+    If you use this property directly (and not a subclass), you get a simple text box
+    """
 
     def __init__(self, id, name, default, fullid, doc="(No documentation was defined for this item)"):
         self.name = name
@@ -994,11 +993,11 @@ def parseProperties(node, contextLevel, idprefix):
 
             global_env = {}
             local_env = {}
-            exec ("filterFn = " + e.getAttribute("filter"), global_env, local_env)
+            exec("filterFn = " + e.getAttribute("filter"), global_env, local_env)
             args["filter"] = local_env["filterFn"]
 
             if e.hasAttribute("static_objects"):
-                exec ("static_objects_fn = " + e.getAttribute("static_objects"), global_env, local_env)
+                exec("static_objects_fn = " + e.getAttribute("static_objects"), global_env, local_env)
                 args["static_objects"] = local_env["static_objects_fn"]
 
             if e.hasAttribute("doc"):
@@ -1008,11 +1007,11 @@ def parseProperties(node, contextLevel, idprefix):
             #    args["unique_id_suffix"] = e.getAttribute("unique_id_suffix")
 
             if e.hasAttribute("obj_identifier"):
-                exec ("obj_identifier_fn = " + e.getAttribute("obj_identifier"), global_env, local_env)
+                exec("obj_identifier_fn = " + e.getAttribute("obj_identifier"), global_env, local_env)
                 args["obj_identifier"] = local_env["obj_identifier_fn"]
 
             if e.hasAttribute("obj_text"):
-                exec ("obj_text_fn = " + e.getAttribute("obj_text"), global_env, local_env)
+                exec("obj_text_fn = " + e.getAttribute("obj_text"), global_env, local_env)
                 args["obj_text"] = local_env["obj_text_fn"]
 
             props.append(StkObjectReferenceProperty(**args))
@@ -1045,22 +1044,18 @@ print("(STK) Loading XML files from ", datapath)
 
 panel_params_path = os.path.join(datapath, "stk_panel_parameters.xml")
 print("(STK) Loading scene properties from ", panel_params_path)
-SCENE_PROPS = []
 SCENE_PROPS = getPropertiesFromXML(panel_params_path, contextLevel=CONTEXT_SCENE)
 
 object_params_path = os.path.join(datapath, "stk_object_parameters.xml")
 print("(STK) Loading object properties from ", object_params_path)
-STK_PER_OBJECT_TRACK_PROPERTIES = []
 STK_PER_OBJECT_TRACK_PROPERTIES = getPropertiesFromXML(object_params_path, contextLevel=CONTEXT_OBJECT)
 
 kart_params_path = os.path.join(datapath, "stk_kart_object_parameters.xml")
 print("(STK) Loading kart properties from ", kart_params_path)
-STK_PER_OBJECT_KART_PROPERTIES = []
 STK_PER_OBJECT_KART_PROPERTIES = getPropertiesFromXML(kart_params_path, contextLevel=CONTEXT_OBJECT)
 
 material_params_path = os.path.join(datapath, "stk_material_parameters.xml")
 print("(STK) Loading material properties from ", material_params_path)
-STK_MATERIAL_PROPERTIES = []
 STK_MATERIAL_PROPERTIES = getPropertiesFromXML(material_params_path, contextLevel=CONTEXT_MATERIAL)
 
 
@@ -1514,19 +1509,15 @@ class StkPanelAddonPreferences(AddonPreferences):
 
 
 def register():
-    bpy.types.INFO_MT_add.append(menu_func_add_banana)
     bpy.utils.register_module(__name__)
+    bpy.types.INFO_MT_add.append(menu_func_add_banana)
     # bpy.utils.register_class(stkpanel_set_user_preferences)
     # bpy.utils.register_class(StkPanelAddonPreferences)
 
 
 def unregister():
-    pass
+    bpy.utils.unregister_module(__name__)
 
 
 if __name__ == "__main__":
     register()
-
-
-def unregister():
-    pass

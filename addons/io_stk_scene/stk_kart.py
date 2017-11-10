@@ -1,7 +1,4 @@
 #!BPY
-
-#(setq tab-width 4)
-#(setq py-indent-offset `4)
 """
 Name: 'STK Kart Exporter (.irrkart)...'
 Blender: 259
@@ -13,8 +10,6 @@ __url__ = ["supertuxkart.sourceforge.net"]
 __version__ = "$Revision: 16945 $"
 __bpydoc__ = """\
 """
-
-# Copyright (C) 2009-2011 Joerg Henrichs, Marianne Gagnon, Xapantu
 
 bl_info = {
     "name": "SuperTuxKart Kart Exporter",
@@ -30,22 +25,16 @@ bl_info = {
     "category": "Import-Export"
 }
 
+# Copyright (C) 2009-2011 Joerg Henrichs, Marianne Gagnon, Xapantu
+
 # If you get an error here, it might be
 # because you don't have Python installed.
 import bpy
-import sys
-import os
-import os.path
-import struct
-import math
-import string
 import re
 
 from mathutils import *
 
 operator = None
-the_scene = None
-
 log = []
 
 thelist = []
@@ -120,7 +109,7 @@ def saveNitroEmitter(f, lNitroEmitter, path):
 # ------------------------------------------------------------------------------
 
 
-def saveHeadlights(f, lHeadlights, path, straight_frame):
+def saveHeadlights(f, lHeadlights, path, straight_frame, context):
     if len(lHeadlights) == 0:
         return
     if 'spm_export' not in dir(bpy.ops.screen):
@@ -155,12 +144,11 @@ def saveHeadlights(f, lHeadlights, path, straight_frame):
             exported_name = instancing_objects[obj.data.name]
         else:
             instancing_objects[obj.data.name] = obj.name
-            global the_scene
-            the_scene.obj_list = [obj]
+            context.scene.obj_list = [obj]
             bpy.ops.screen.spm_export(
                 localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True
             )
-            the_scene.obj_list = []
+            context.scene.obj_list = []
 
         flags.append('           model="%s.spm"/>\n' % exported_name)
         f.write('%s' % ' '.join(flags))
@@ -171,7 +159,7 @@ def saveHeadlights(f, lHeadlights, path, straight_frame):
 # Save speed weighted
 
 
-def saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame):
+def saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame, context):
     if len(lSpeedWeighted) == 0:
         return
     if 'spm_export' not in dir(bpy.ops.screen):
@@ -219,22 +207,22 @@ def saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame):
             exported_name = instancing_objects[obj.data.name]
         else:
             instancing_objects[obj.data.name] = obj.name
-            global the_scene
-            the_scene.obj_list = [obj]
+            context.scene.obj_list = [obj]
             bpy.ops.screen.spm_export(
                 localsp=True, filepath=path + "/" + obj.name, export_tangent=False, overwrite_without_asking=True
             )
-            the_scene.obj_list = []
+            context.scene.obj_list = []
 
         flags.append('           model="%s.spm"/>\n' % exported_name)
         f.write('%s' % ' '.join(flags))
+
     f.write('  </speed-weighted-objects>\n')
 
 
 # ------------------------------------------------------------------------------
 
 
-def saveWheels(f, lWheels, path):
+def saveWheels(f, lWheels, path, context):
     if len(lWheels) == 0:
         return
     if 'spm_export' not in dir(bpy.ops.screen):
@@ -279,8 +267,7 @@ def saveWheels(f, lWheels, path):
         lOldPos = Vector([wheel.location.x, wheel.location.y, wheel.location.z])
         wheel.location = Vector([0, 0, 0])
 
-        global the_scene
-        the_scene.obj_list = [wheel]
+        context.scene.obj_list = [wheel]
 
         bpy.ops.screen.spm_export(
             localsp=False,
@@ -288,7 +275,7 @@ def saveWheels(f, lWheels, path):
             export_tangent=False,
             overwrite_without_asking=True
         )
-        the_scene.obj_list = []
+        context.scene.obj_list = []
 
         wheel.location = lOldPos
 
@@ -299,10 +286,9 @@ def saveWheels(f, lWheels, path):
 # Saves any defined animations to the kart.xml file.
 
 
-def saveAnimations(f):
-    global the_scene
-    first_frame = the_scene.frame_start
-    last_frame = the_scene.frame_end
+def saveAnimations(f, context):
+    first_frame = context.scene.frame_start
+    last_frame = context.scene.frame_end
     straight_frame = -1
     # search for animation
     lAnims = []
@@ -310,7 +296,7 @@ def saveAnimations(f):
     for i in range(first_frame, last_frame + 1):
 
         # Find markers at this frame
-        for curr in the_scene.timeline_markers:
+        for curr in context.scene.timeline_markers:
             if curr.frame == i:
                 markerName = curr.name.lower()
                 if markerName in \
@@ -387,9 +373,9 @@ def saveSounds(f, engine_sfx):
 # Exports the actual kart.
 
 
-def exportKart(path):
+def exportKart(path, context):
 
-    global the_scene
+    the_scene = context.scene
     kart_name_string = the_scene['name']
 
     if not kart_name_string or len(kart_name_string) == 0:
@@ -499,9 +485,9 @@ def exportKart(path):
     saveSounds(f, kart_engine_sfx)
     straight_frame = saveAnimations(f)
     saveWheels(f, lWheels, path)
-    saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame)
+    saveSpeedWeighted(f, lSpeedWeighted, path, straight_frame, context)
     saveNitroEmitter(f, lNitroEmitter, path)
-    saveHeadlights(f, lHeadlights, path, straight_frame)
+    saveHeadlights(f, lHeadlights, path, straight_frame, context)
 
     if hat_object:
         if hat_object.parent and hat_object.parent_type == 'BONE':
@@ -539,7 +525,7 @@ def exportKart(path):
     f.write('</kart>\n')
     f.close()
 
-    the_scene.obj_list = lKart
+    context.scene.obj_list = lKart
 
     if 'spm_export' not in dir(bpy.ops.screen):
         log_error("Cannot find the spm exporter, make sure you installed it properly")
@@ -552,7 +538,7 @@ def exportKart(path):
         overwrite_without_asking=True,
         static_mesh_frame=straight_frame
     )
-    the_scene.obj_list = []
+    context.scene.obj_list = []
 
     #spm_export.write_spm_file(Blender.sys.join(path, model_file), lKart)
 
@@ -570,11 +556,11 @@ def exportKart(path):
 
 
 # ==============================================================================
-def savescene_callback(path):
+def savescene_callback(path, context):
     global log
     log = []
 
-    exporter = exportKart(path)
+    exporter = exportKart(path, context)
 
 
 # ==== EXPORT OPERATOR ====
@@ -600,6 +586,7 @@ class STK_Kart_Export_Operator(bpy.types.Operator):
         else:
             import os
             blend_filepath = os.path.splitext(blend_filepath)[0]
+
         self.filepath = blend_filepath
 
         context.window_manager.fileselect_add(self)
@@ -624,7 +611,8 @@ class STK_Kart_Export_Operator(bpy.types.Operator):
         bpy.types.Scene.obj_list = property(getlist, setlist)
 
         import os.path
-        savescene_callback(os.path.dirname(self.filepath))
+        savescene_callback(os.path.dirname(self.filepath), context)
+
         return {'FINISHED'}
 
 
@@ -659,9 +647,6 @@ class STK_Kart_Exporter_Panel(bpy.types.Panel):
     bl_context = "scene"
 
     def draw(self, context):
-        global the_scene
-        the_scene = context.scene
-
         layout = self.layout
 
         # ==== Types group ====
@@ -701,17 +686,16 @@ class STK_Kart_Exporter_Panel(bpy.types.Panel):
 
 
 def menu_func_export(self, context):
-    global the_scene
-    the_scene = context.scene
     self.layout.operator(STK_Kart_Export_Operator.bl_idname, text="STK Kart")
 
 
 def register():
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
     bpy.utils.register_module(__name__)
+    bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
+    bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 

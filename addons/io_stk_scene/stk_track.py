@@ -11,6 +11,20 @@ __version__ = "$Revision: 17016 $"
 __bpydoc__ = """\
 """
 
+bl_info = {
+    "name": "SuperTuxKart Track Exporter",
+    "description": "Exports a blender scene to the SuperTuxKart track format",
+    "author": "Joerg Henrichs, Marianne Gagnon",
+    "version": (1, 0),
+    "blender": (2, 5, 9),
+    "api": 31236,
+    "location": "File > Export",
+    "warning": '',    # used for warning icon and text in addons panel
+    "wiki_url": "http://supertuxkart.sourceforge.net/Get_involved",
+    "tracker_url": "https://sourceforge.net/apps/trac/supertuxkart/",
+    "category": "Import-Export"
+}
+
 # From Supertuxkart SVN revision $Revision: 17016 $
 
 # Copyright (C) 2010 Joerg Henrichs
@@ -23,9 +37,7 @@ import bpy
 import sys
 import os
 import os.path
-import struct
 import math
-import string
 import re
 
 track_tesselated_objects = {}
@@ -53,20 +65,6 @@ def track_getUVTextures(obj_data):
     else:
         return obj_data.uv_textures
 
-
-bl_info = {
-    "name": "SuperTuxKart Track Exporter",
-    "description": "Exports a blender scene to the SuperTuxKart track format",
-    "author": "Joerg Henrichs, Marianne Gagnon",
-    "version": (1, 0),
-    "blender": (2, 5, 9),
-    "api": 31236,
-    "location": "File > Export",
-    "warning": '',    # used for warning icon and text in addons panel
-    "wiki_url": "http://supertuxkart.sourceforge.net/Get_involved",
-    "tracker_url": "https://sourceforge.net/apps/trac/supertuxkart/",
-    "category": "Import-Export"
-}
 
 from mathutils import *
 
@@ -3603,12 +3601,13 @@ def menu_func_export_stktrack(self, context):
 
 
 def register():
+    bpy.utils.register_module(__name__)
     bpy.types.Scene.stk_track_export_images = bpy.props.BoolProperty(name="Export images")
     bpy.types.INFO_MT_file_export.append(menu_func_export_stktrack)
-    bpy.utils.register_module(__name__)
 
 
 def unregister():
+    bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_export.remove(menu_func_export_stktrack)
 
 

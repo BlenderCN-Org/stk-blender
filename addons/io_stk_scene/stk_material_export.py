@@ -1,41 +1,30 @@
-"""
-Name: 'STK Material Exporter...'
-Blender: 259
-Group: 'Export'
-Tooltip: 'Export a SuperTuxKart track scene'
-"""
-__author__ = ["Joerg Henrichs (hiker), Marianne Gagnon (Auria)"]
-__url__ = ["supertuxkart.sourceforge.net"]
-__version__ = "$Revision: 17088 $"
-__bpydoc__ = """\
-"""
+#!BPY
 
-bl_info = {
-    "name": "SuperTuxKart Material Exporter",
-    "description": "Exports image properties to the SuperTuxKart track format",
-    "author": "Joerg Henrichs, Marianne Gagnon",
-    "version": (1, 0),
-    "blender": (2, 5, 9),
-    "api": 31236,
-    "location": "File > Export",
-    "warning": '',    # used for warning icon and text in addons panel
-    "wiki_url": "http://supertuxkart.sourceforge.net/Get_involved",
-    "tracker_url": "https://sourceforge.net/apps/trac/supertuxkart/",
-    "category": "Import-Export"
-}
-
-
-def getScriptVersion():
-    try:
-        m = re.search('(\d+)', __version__)
-        return str(m.group(0))
-    except:
-        return "Unknown"
-
+# Copyright (c) 2017 STK blender addon author(s)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import bpy
 import bpy.path
 import os
+from . import config
+
 
 # ------------------------------------------------------------------------------
 # Gets an id property of an object, returning the default if the id property
@@ -43,8 +32,7 @@ import os
 # defined, this function will also set the property to this default value.
 
 
-def getIdProperty(obj, name, default="", set_value_if_undefined=1):
-    import traceback
+def get_id_property(obj, name, default="", set_value_if_undefined=1):
     try:
         prop = obj[name]
         if isinstance(prop, str):
@@ -52,7 +40,7 @@ def getIdProperty(obj, name, default="", set_value_if_undefined=1):
         else:
             return prop
     except:
-        if default != None and set_value_if_undefined:
+        if default is not None and set_value_if_undefined:
             obj[name] = default
     return default
 
@@ -61,7 +49,7 @@ def getIdProperty(obj, name, default="", set_value_if_undefined=1):
 # Write several ways of writing true/false as Y/N
 
 
-def convertTextToYN(sText):
+def convert_text_to_yes_no(sText):
     sTemp = sText.strip().upper()
     if sTemp == "0" or sTemp[0] == "N" or sTemp == "FALSE":
         return "N"
@@ -72,7 +60,7 @@ def convertTextToYN(sText):
 # Writes the materials files, which includes all texture definitions
 # (remember: Blenders "image" objects are STK's "material" objects)
 # Please use the STKProperty browser!!!
-def writeMaterialsFile(sPath):
+def write_material_file(sPath):
 
     # Work around the bug in blender where textures keep disappearing, by forcefully pinning all textures.
     for img in bpy.data.images:
@@ -86,6 +74,7 @@ def writeMaterialsFile(sPath):
         for sAttrib in i.keys():
             materfound = True
             break
+
     if not materfound:
         print("No Materials defined.")
         return
@@ -275,7 +264,7 @@ def writeMaterialsFile(sPath):
 
     f = open(sPath + "/materials.xml", mode="w", encoding="utf-8")
     f.write("<?xml version=\"1.0\"?>\n")
-    f.write("<!-- Generated with script from SVN rev %s -->\n" % getScriptVersion())
+    f.write("<!-- Generated with script from SVN rev %s -->\n" % config.get_script_version())
     f.write("<materials>\n")
 
     blendfile_dir = os.path.dirname(bpy.data.filepath)
@@ -295,9 +284,9 @@ def writeMaterialsFile(sPath):
         sSFX = ""
         sParticle = ""
         sZipper = ""
-        hasSoundeffect = (convertTextToYN(getIdProperty(i, "use_sfx", "no")) == "Y")
-        hasParticle = (convertTextToYN(getIdProperty(i, "particle", "no")) == "Y")
-        hasZipper = (convertTextToYN(getIdProperty(i, "zipper", "no")) == "Y")
+        hasSoundeffect = (convert_text_to_yes_no(get_id_property(i, "use_sfx", "no")) == "Y")
+        hasParticle = (convert_text_to_yes_no(get_id_property(i, "particle", "no")) == "Y")
+        hasZipper = (convert_text_to_yes_no(get_id_property(i, "zipper", "no")) == "Y")
 
         # Create a copy of the list of defaults so that it can be modified. Then add
         # all properties of the current image
@@ -308,11 +297,11 @@ def writeMaterialsFile(sPath):
 
         for AProperty, ADefault in l:
             # Don't add the (default) values to the property list
-            currentValue = getIdProperty(i, AProperty, ADefault, set_value_if_undefined=0)
+            currentValue = get_id_property(i, AProperty, ADefault, set_value_if_undefined=0)
 
             # Correct for all the ways booleans can be represented (true/false;yes/no;zero/not_zero)
             if AProperty in lMaterialProperties and lMaterialProperties[AProperty]['type'] == 'bool':
-                currentValue = convertTextToYN(currentValue)
+                currentValue = convert_text_to_yes_no(currentValue)
 
             # These items pertain to the soundeffects (starting with sfx_)
             if AProperty.strip().startswith("sfx_"):
@@ -387,15 +376,6 @@ def writeMaterialsFile(sPath):
     # ----------------------------------------------------------------------
 
 
-class STK_Material_Export_Operator(bpy.types.Operator):
-    bl_idname = ("screen.stk_material_exporter")
-    bl_label = ("Export Materials")
-    filepath = bpy.props.StringProperty()
-
-    def execute(self, context):
-        writeMaterialsFile(self.filepath)
-        return {'FINISHED'}
 
 
-def register():
-    bpy.utils.register_module(__name__)
+

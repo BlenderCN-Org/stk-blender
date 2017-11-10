@@ -43,7 +43,7 @@ from . import spm_export
 from . import spm_import
 
 bl_info = {
-    "name": "SPM (Space partitioned mesh) Model ExporterImporter",
+    "name": "SPM (Space partitioned mesh) Model Exporter/Importer",
     "description": "Exports and imports a blender scene or object to/from the SPM format",
     "version": (1, 0),
     "blender": (2, 7, 0),
@@ -78,8 +78,9 @@ class SPM_Import_Operator(bpy.types.Operator, ImportHelper):
     bl_label = ("SPM Import")
     filename_ext = ".spm"
     filter_glob = bpy.props.StringProperty(default="*.spm", options={'HIDDEN'})
-    extra_tex_path = bpy.props.StringProperty(name="Texture path(s)", \
-                                              description="Extra directory for textures, seperate by ;;")
+    extra_tex_path = bpy.props.StringProperty(
+        name="Texture path(s)", description="Extra directory for textures, separate by ;;"
+    )
 
     def draw(self, context):
         layout = self.layout

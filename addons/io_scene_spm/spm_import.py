@@ -21,18 +21,69 @@
 # SOFTWARE.
 
 import bpy
+import bpy_extras
 import struct
 import bmesh
+import os
+import sys
+from bpy_extras.image_utils import load_image
 
 SPM_VERSION = 1
 
 
+def reinterpret_cast_int_to_float(int_val):
+    return struct.unpack('f', struct.pack('I', int_val))[0]
+
+
+def decompress_half_float(raw_bytes):
+    if sys.version_info[0] == 3 and sys.version_info[1] > 5:
+        return struct.unpack("<e", raw_bytes)[0]
+    else:
+        float16 = int(struct.unpack('<H', raw_bytes)[0])
+
+        # sign
+        s = (float16 >> 15) & 0x00000001
+        # exponent
+        e = (float16 >> 10) & 0x0000001f
+        # fraction
+        f = float16 & 0x000003ff
+
+        if e == 0:
+            if f == 0:
+                return reinterpret_cast_int_to_float(int(s << 31))
+            else:
+                while not (f & 0x00000400):
+                    f = f << 1
+                    e -= 1
+                e += 1
+                f &= ~0x00000400
+
+        elif e == 31:
+            if f == 0:
+                return reinterpret_cast_int_to_float(int((s << 31) | 0x7f800000))
+            else:
+                return reinterpret_cast_int_to_float(int((s << 31) | 0x7f800000 | (f << 13)))
+
+        e = e + (127 - 15)
+        f = f << 13
+        return reinterpret_cast_int_to_float(int((s << 31) | (e << 23) | f))
+
+
 def generate_mesh_buffer(
-        spm, vertices_count, indices_count, read_normal, read_vcolor, read_tangent, uv_one, uv_two, is_skinned,
-        material_map, material_id
+    spm, vertices_count, indices_count, read_normal, read_vcolor, read_tangent, uv_one, uv_two, is_skinned,
+    material_map, material_id
 ):
+    obj_name =\
+        (material_map[material_id][2] if material_map[material_id][2] else "_") +\
+        "_" +\
+        (material_map[material_id][3] if material_map[material_id][3] else "_")
+    mesh = bpy.data.meshes.new(obj_name)
+    obj = bpy.data.objects.new(obj_name, mesh)
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+
     vertices_list = []
-    idx_size = \
+    idx_size =\
         4 if vertices_count > 65535 else 2 if vertices_count > 255 else 1
     for vert in range(0, vertices_count):
         vc = None
@@ -41,54 +92,106 @@ def generate_mesh_buffer(
         u_2 = 0.0
         v_2 = 0.0
         x, y, z = struct.unpack('<fff', spm.read(12))
-        position = (x, z, y)
+        bm.verts.new((x, z, y))
         if read_normal:
             # Unused, auto re-calculate later
             spm.read(4)
+
         if read_vcolor:
             # Color identifier
             ci = struct.unpack('<B', spm.read(1))[0]
             if ci == 128:
                 # All white
-                vc = (1.0, 1.0, 1.0)
+                vc = [255.0, 255.0, 255.0]
             else:
                 r, g, b = struct.unpack('<BBB', spm.read(3))
-                vc = (r / 255.0, g / 255.0, b / 255.0)
+                vc = [r / 255.0, g / 255.0, b / 255.0]
+
         if uv_one:
-            u, v = struct.unpack('<ee', spm.read(4))
+            u = decompress_half_float(spm.read(2))
+            v = decompress_half_float(spm.read(2))
+            v = 1.0 - v
             if uv_two:
-                u_2, v_2 = struct.unpack('<ee', spm.read(4))
+                u_2 = decompress_half_float(spm.read(2))
+                v_2 = decompress_half_float(spm.read(2))
+                v_2 = 1.0 - v_2
             if read_tangent:
                 # Unused
                 spm.read(4)
+
         if is_skinned:
             # Unused
             spm.read(16)
-        vertices_list.append((position, vc, (u, v, u_2, v_2)))
+        vertices_list.append((vc, (u, v, u_2, v_2)))
 
+    indices_list = None
     if idx_size == 4:
-        indices_list = struct.unpack("%dI" % (indices_count,), spm.read(indices_count * idx_size))
+        indices_list = struct.unpack("%dI" % (indices_count, ), spm.read(indices_count * idx_size))
     elif idx_size == 2:
-        indices_list = struct.unpack("%dH" % (indices_count,), spm.read(indices_count * idx_size))
+        indices_list = struct.unpack("%dH" % (indices_count, ), spm.read(indices_count * idx_size))
     else:
-        indices_list = struct.unpack("%dB" % (indices_count,), spm.read(indices_count * idx_size))
-    idx = 0
+        indices_list = struct.unpack("%dB" % (indices_count, ), spm.read(indices_count * idx_size))
 
-    mesh = bpy.data.meshes.new(str(material_id))
-    obj = bpy.data.objects.new(str(material_id), mesh)
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    while idx < len(indices_list):
-        v1 = bm.verts.new(vertices_list[indices_list[idx + 2]][0])
-        v2 = bm.verts.new(vertices_list[indices_list[idx + 1]][0])
-        v3 = bm.verts.new(vertices_list[indices_list[idx]][0])
-        bm.faces.new((v1, v2, v3))
-        idx = idx + 3
+    # Required after adding / removing vertices and before accessing them
+    # by index.
+    bm.verts.ensure_lookup_table()
+    # Required to actually retrieve the indices later on (or they stay -1).
+    bm.verts.index_update()
+    for i in range(0, len(indices_list), 3):
+        try:
+            bm.faces.new(bm.verts[j] for j in reversed(indices_list[i:i + 3]))
+        except:
+            # Face already exists
+            continue
+
+    if read_vcolor:
+        color_layer = bm.loops.layers.color.new()
+    if uv_one:
+        uv_layer = bm.loops.layers.uv.new()
+        tex_layer = bm.faces.layers.tex.new()
+    if uv_two:
+        uv_layer_two = bm.loops.layers.uv.new()
+        tex_layer_two = bm.faces.layers.tex.new()
+
+    for face in bm.faces:
+        if uv_one:
+            face[tex_layer].image = material_map[material_id][0]
+        if uv_two:
+            face[tex_layer_two].image = material_map[material_id][1]
+        for loop in face.loops:
+            if read_vcolor:
+                loop[color_layer] = vertices_list[loop.vert.index][0]
+            if uv_one:
+                loop[uv_layer].uv = (vertices_list[loop.vert.index][1][0], vertices_list[loop.vert.index][1][1])
+            if uv_two:
+                loop[uv_layer_two].uv = (vertices_list[loop.vert.index][1][2], vertices_list[loop.vert.index][1][3])
 
     bmesh.ops.remove_doubles(bm, verts=bm.verts)
     bm.to_mesh(mesh)
     bm.free()
+
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+
     bpy.context.scene.objects.link(obj)
+
+
+def get_image(tex_name, working_directory, extra_tex_path):
+    # Try in loaded images first:
+    for image in bpy.data.images:
+        if tex_name == os.path.basename(image.filepath):
+            return image
+
+    # Try local directory first
+    img = bpy_extras.image_utils.load_image(tex_name, working_directory)
+    if img is not None:
+        return img
+    img = bpy_extras.image_utils.load_image(tex_name, extra_tex_path, recursive=True)
+    if img is not None:
+        return img
+    else:
+        print("Missing image %s" % tex_name)
+    return None
 
 
 def load(context, filepath, extra_tex_path):
@@ -126,16 +229,21 @@ def load(context, filepath, extra_tex_path):
     spm.read(24)
     material_count = struct.unpack('<H', spm.read(2))[0]
     material_map = []
+    working_directory = os.path.dirname(filepath)
     for material in range(0, material_count):
         tex_name_1 = None
         tex_name_2 = None
+        tex_fname_1 = None
+        tex_fname_2 = None
         tex_size = struct.unpack('<B', spm.read(1))[0]
         if tex_size > 0:
             tex_name_1 = spm.read(tex_size).decode('ascii')
+            tex_fname_1 = get_image(tex_name_1, working_directory, extra_tex_path)
         tex_size = struct.unpack('<B', spm.read(1))[0]
         if tex_size > 0:
             tex_name_2 = spm.read(tex_size).decode('ascii')
-        material_map.append((tex_name_1, tex_name_2))
+            tex_fname_2 = get_image(tex_name_2, working_directory, extra_tex_path)
+        material_map.append((tex_fname_1, tex_fname_2, tex_name_1, tex_name_2))
 
     # Space partitioned mesh sector count, should be 1
     sector_count = struct.unpack('<H', spm.read(2))[0]
@@ -149,10 +257,9 @@ def load(context, filepath, extra_tex_path):
             assert material_id < material_count
             generate_mesh_buffer(
                 spm, vertices_count, indices_count, read_normal, read_vcolor, read_tangent,
-                material_map[material_id][0] is not None, material_map[material_id][1] is not None, is_skinned,
+                material_map[material_id][2] is not None, material_map[material_id][3] is not None, is_skinned,
                 material_map, material_id
             )
-
         if header == "SPMS":
             # Reserved, never used
             spm.read(24)

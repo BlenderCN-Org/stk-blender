@@ -102,7 +102,7 @@ def generate_mesh_buffer(
             ci = struct.unpack('<B', spm.read(1))[0]
             if ci == 128:
                 # All white
-                vc = [255.0, 255.0, 255.0]
+                vc = [1.0, 1.0, 1.0]
             else:
                 r, g, b = struct.unpack('<BBB', spm.read(3))
                 vc = [r / 255.0, g / 255.0, b / 255.0]

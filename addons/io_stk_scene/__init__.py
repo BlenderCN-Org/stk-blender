@@ -61,9 +61,15 @@ class STK_Material_Export_Operator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def menu_func_add_banana(self, context):
+    self.layout.operator_menu_enum("scene.stk_add_object", property="value", text="STK", icon='AUTO')
+
+
 def register():
     bpy.utils.register_module(__name__)
+    bpy.types.INFO_MT_add.append(menu_func_add_banana)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
+    bpy.types.INFO_MT_add.remove(menu_func_add_banana)

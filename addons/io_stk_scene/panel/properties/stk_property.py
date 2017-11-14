@@ -20,35 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import bpy
-from .constants import *
 
+class StkProperty:
+    """
+    The base class for all properties.
+    If you use this property directly (and not a subclass), you get a simple text box
+    """
 
-def get_object(context, contextLevel):
-    if contextLevel == CONTEXT_OBJECT:
-        return context.object
-    if contextLevel == CONTEXT_SCENE:
-        return context.scene
-    if contextLevel == CONTEXT_MATERIAL:
-        if 'selected_image' in context.scene:
-            selected_image = context.scene['selected_image']
-            if selected_image in bpy.data.images:
-                return bpy.data.images[selected_image]
-
-    return None
-
-
-def get_simple_hash(x):
-    import hashlib
-    import base64
-    m = hashlib.md5()
-    m.update(x.encode('ascii'))
-    return base64.b64encode(m.digest()).decode('ascii') \
-        .replace('=', '').replace('/', '_').replace('+', '_').lower()[0:15]
-
-
-def generate_operator_name(prefix, fullid, id):
-    if len(prefix + fullid + '_' + id) > 60:
-        return prefix + get_simple_hash(fullid) + '_' + id
-    else:
-        return prefix + fullid + '_' + id
+    def __init__(self, id, name, default, fullid, doc="(No documentation was defined for this item)"):
+        self.name = name
+        self.id = id
+        self.fullid = fullid
+        self.default = default
+        self.doc = doc

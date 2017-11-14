@@ -25,7 +25,6 @@ import bpy.path
 import os
 from . import config
 
-
 # ------------------------------------------------------------------------------
 # Gets an id property of an object, returning the default if the id property
 # is not set. If set_value_if_undefined is set and the property is not
@@ -374,8 +373,3 @@ def write_material_file(sPath):
     f.close()
     # print bsys.time()-start_time,"seconds"
     # ----------------------------------------------------------------------
-
-
-
-
-

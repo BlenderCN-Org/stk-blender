@@ -1,5 +1,6 @@
 #!BPY
 
+
 def get_script_version():
     try:
         m = re.search('(\d+)', __version__)

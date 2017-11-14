@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 import bpy
 from bpy.types import Operator, AddonPreferences
 from bpy.props import StringProperty, IntProperty, BoolProperty
@@ -29,39 +28,57 @@ import os.path
 from .util import *
 from .properties import *
 from .constants import *
+from .properties import *
 
 
-datapath = None
-for curr in bpy.utils.script_paths():
-    if os.path.exists(os.path.join(curr, "addons", "stkdata")):
-        datapath = os.path.join(curr, "addons", "stkdata")
-        break
+def raise_error(message):
+    print(message)
+    raise Exception(message)
 
-if datapath is None:
-    print("(STK) Make sure the stkdata folder is installed, cannot locate it!!")
 
-print("(STK) Loading XML files from ", datapath)
+current_path = os.path.dirname(os.path.realpath(__file__))
+addon_path = os.path.dirname(current_path)
+data_path = os.path.join(addon_path, "data")
 
-panel_params_path = os.path.join(datapath, "stk_panel_parameters.xml")
-print("(STK) Loading scene properties from ", panel_params_path)
-SCENE_PROPS = util.get_properties_from_xml(panel_params_path, contextLevel=CONTEXT_SCENE)
+# Load the panel XML properties
+if os.path.exists(data_path):
+    print("(STK) Loading XML files from ", data_path)
+    panel_params_path = os.path.join(data_path, "stk_panel_parameters.xml")
+    object_params_path = os.path.join(data_path, "stk_object_parameters.xml")
+    kart_params_path = os.path.join(data_path, "stk_kart_object_parameters.xml")
+    material_params_path = os.path.join(data_path, "stk_material_parameters.xml")
 
-object_params_path = os.path.join(datapath, "stk_object_parameters.xml")
-print("(STK) Loading object properties from ", object_params_path)
-STK_PER_OBJECT_TRACK_PROPERTIES = util.get_properties_from_xml(object_params_path,
-                                                               contextLevel=CONTEXT_OBJECT)
+    if os.path.exists(panel_params_path):
+        print("(STK) Loading scene properties from ", panel_params_path)
+        SCENE_PROPS = get_properties_from_xml(panel_params_path, contextLevel=CONTEXT_SCENE)
+    else:
+        raise_error("(STK) failed to load panel params XML")
 
-kart_params_path = os.path.join(datapath, "stk_kart_object_parameters.xml")
-print("(STK) Loading kart properties from ", kart_params_path)
-STK_PER_OBJECT_KART_PROPERTIES = util.get_properties_from_xml(kart_params_path, contextLevel=CONTEXT_OBJECT)
+    if os.path.exists(object_params_path):
+        print("(STK) Loading object properties from ", object_params_path)
+        STK_PER_OBJECT_TRACK_PROPERTIES = get_properties_from_xml(object_params_path, contextLevel=CONTEXT_OBJECT)
+    else:
+        raise_error("(STK) failed to load object params XML")
 
-material_params_path = os.path.join(datapath, "stk_material_parameters.xml")
-print("(STK) Loading material properties from ", material_params_path)
-STK_MATERIAL_PROPERTIES = util.get_properties_from_xml(material_params_path, contextLevel=CONTEXT_MATERIAL)
+    if os.path.exists(kart_params_path):
+        print("(STK) Loading kart properties from ", kart_params_path)
+        STK_PER_OBJECT_KART_PROPERTIES = get_properties_from_xml(kart_params_path, contextLevel=CONTEXT_OBJECT)
+    else:
+        raise_error("(STK) failed to load kart params XML")
+
+    if os.path.exists(material_params_path):
+        print("(STK) Loading material properties from ", material_params_path)
+        STK_MATERIAL_PROPERTIES = get_properties_from_xml(material_params_path, contextLevel=CONTEXT_MATERIAL)
+    else:
+        raise_error("(STK) failed to load material params XML")
+
+else:
+    raise_error("(STK) Make sure the data folder is installed, cannot locate it!!")
 
 
 # ==== PANEL BASE ====
 class PanelBase:
+
     def recursivelyAddProperties(self, properties, layout, obj, contextLevel):
 
         for id in properties.keys():
@@ -86,7 +103,7 @@ class PanelBase:
                     icon=icon,
                     emboss=False
                 )
-                row.label(" ")  # force the operator to not maximize
+                row.label(" ")    # force the operator to not maximize
                 if state == "true":
                     if len(curr.subproperties) > 0:
                         box = layout.box()
@@ -121,7 +138,9 @@ class PanelBase:
                 row.label(text=curr.name)
                 if curr.id in obj:
                     row.prop(obj, '["' + curr.id + '"]', text="")
-                    row.operator(generate_operator_name("screen.apply_color_", curr.fullid, curr.id), text="", icon='COLOR')
+                    row.operator(
+                        generate_operator_name("screen.apply_color_", curr.fullid, curr.id), text="", icon='COLOR'
+                    )
                 else:
                     row.operator('screen.stk_missing_props_' + str(contextLevel))
 
@@ -174,7 +193,9 @@ class PanelBase:
                 if curr.id in obj:
                     row.prop(obj, '["' + curr.id + '"]', text="")
                     row.menu(
-                        generate_operator_name("screen.stk_object_menu_", curr.fullid, curr.id), text="", icon='TRIA_DOWN'
+                        generate_operator_name("screen.stk_object_menu_", curr.fullid, curr.id),
+                        text="",
+                        icon='TRIA_DOWN'
                     )
                 else:
                     row.operator('screen.stk_missing_props_' + str(contextLevel))
@@ -219,6 +240,7 @@ class STK_MissingProps_Object(bpy.types.Operator):
             for curr in STK_PER_OBJECT_KART_PROPERTIES[1]:
                 properties[curr.id] = curr
             create_properties(obj, properties)
+
         elif is_track or is_node:
             properties = OrderedDict([])
             for curr in STK_PER_OBJECT_TRACK_PROPERTIES[1]:
@@ -238,6 +260,7 @@ class STK_MissingProps_Scene(bpy.types.Operator):
         properties = OrderedDict([])
         for curr in SCENE_PROPS[1]:
             properties[curr.id] = curr
+
         create_properties(scene, properties)
         return {'FINISHED'}
 
@@ -251,6 +274,7 @@ class STK_MissingProps_Material(bpy.types.Operator):
         properties = OrderedDict([])
         for curr in STK_MATERIAL_PROPERTIES[1]:
             properties[curr.id] = curr
+
         create_properties(material, properties)
         return {'FINISHED'}
 
@@ -306,12 +330,13 @@ class ImagePickerMenu(bpy.types.Menu):
         i = 0
         for curr in bpy.data.images:
 
-            if (curr.library is not None):
+            if curr.library is not None:
                 continue
-            if (not is_lib_node and not os.path.abspath(bpy.path.abspath(curr.filepath)).startswith(blend_path)):
+            if not is_lib_node and \
+                    not os.path.abspath(bpy.path.abspath(curr.filepath)).startswith(blend_path):
                 continue
 
-            if (i % 20 == 0):
+            if i % 20 == 0:
                 col = row.column()
             i += 1
             col.operator("scene.stk_select_image", text=curr.name).name = curr.name
@@ -408,8 +433,7 @@ class STK_AddObject(bpy.types.Operator):
         items=[
             ('banana', 'Banana',
              'Banana'), ('item', 'Item (Gift Box)',
-                         'Item (Gift Box)'), ('light', 'Light', 'Light'),
-            ('nitro_big', 'Nitro (Big)', 'Nitro (big)'),
+                         'Item (Gift Box)'), ('light', 'Light', 'Light'), ('nitro_big', 'Nitro (Big)', 'Nitro (big)'),
             ('nitro_small', 'Nitro (Small)',
              'Nitro (Small)'), ('particle_emitter', 'Particle Emitter',
                                 'Particle Emitter'), ('sfx_emitter', 'Sound Emitter', 'Sound Emitter'),
@@ -450,6 +474,7 @@ class STK_AddObject(bpy.types.Operator):
                     break
 
         return {'FINISHED'}
+
 
 # ==== SCENE PANEL ====
 class SuperTuxKartScenePanel(bpy.types.Panel, PanelBase):
@@ -500,12 +525,12 @@ class StkPanelAddonPreferences(AddonPreferences):
 
     stk_assets_path = StringProperty(
         name="Supertuxkart assets (data) folder",
-        # subtype='DIR_PATH',
+    # subtype='DIR_PATH',
     )
 
     stk_delete_old_files_on_export = BoolProperty(
         name="Delete all old files when exporting a track in a folder (*.spm)",
-        # subtype='DIR_PATH',
+    # subtype='DIR_PATH',
     )
 
     def draw(self, context):
@@ -529,7 +554,6 @@ class StkPanelAddonPreferences(AddonPreferences):
 #            context.object.data.uv_textures[-1].name = 'Lightmap'
 #
 # bpy.utils.register_class(STK_AddLightmap)
-
 
 # class stkpanel_set_user_preferences(Operator):
 #    bl_idname = "object.stkpanel_set_user_preferences"

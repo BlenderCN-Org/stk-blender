@@ -21,8 +21,16 @@
 # SOFTWARE.
 
 import xml.dom.minidom
-from .properties import *
 import getpass
+
+from .stk_bool_property import StkBoolProperty
+from .stk_color_property import StkColorProperty
+from .stk_enum_property import StkEnumProperty, StkCombinableEnumProperty, \
+    StkEnumChoice
+from .stk_group_property import StkProperyGroup
+from .stk_object_reference_property import StkObjectReferenceProperty
+from .stk_property import StkProperty
+from .stk_primitive_properties import StkLabelPseudoProperty, StkFloatProperty, StkIntProperty
 
 
 def create_properties(object, props):

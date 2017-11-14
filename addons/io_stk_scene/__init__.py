@@ -35,6 +35,7 @@ import bpy
 import os
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from . import stk_material_export
+from .panel import *
 
 bl_info = {
     "name": "STK Scene Exporter for Material/Kart/Track",
